@@ -1,5 +1,5 @@
 import {getErrorMessage} from './errors'
-import {getCurrentTokenData} from './utils'
+import {getCurrentTokenData, updateToken} from './utils'
 
 window.addEventListener("load", () => {
     console.log("welcome to the start page")
@@ -58,10 +58,10 @@ window.addEventListener("load", () => {
             // store jwt
             const jwt = await res.text()
 
-            localStorage.setItem("token", jwt)
+            updateToken(jwt)
 
             console.log(`allowed to join`)
-            window.location.assign(`/game/${reqBody.session_id}`)
+            window.location.assign(`/game/`)
         } 
         else {
             // no valid login

@@ -3,7 +3,7 @@ interface TokenData {
     session_id: string
 }
 
-export function parseJWTokenData(jwt: string): TokenData | null {
+export function parseJWTokenData(jwt: string | null): TokenData | null {
     if (jwt) {
         const splitted = jwt.split(".")
         
@@ -20,6 +20,14 @@ export function parseJWTokenData(jwt: string): TokenData | null {
     return null
 }
 
+export function updateToken(token: string) {
+    localStorage.setItem("token", token)
+    document.cookie = `token=${token}`
+}
+
+export function getCurrentTokenString() : string | null {
+    return localStorage.getItem("token")
+}
 
 export function getCurrentTokenData() : TokenData | null {
     let jwt = localStorage.getItem("token")

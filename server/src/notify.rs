@@ -2,24 +2,27 @@ use crate::api::auth::SessionID;
 use log::{error, info, warn};
 use std::collections::HashMap;
 use std::net::{TcpListener, TcpStream, SocketAddr};
-use std::sync::{mpsc, Mutex};
+use std::sync::{mpsc, Mutex, Arc};
 use tungstenite::protocol::WebSocket;
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, RefCell, Ref};
 use std::convert::TryFrom;
 use std::time::Duration;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{self, Ordering};
 use tungstenite::handshake::server::ErrorResponse;
 use std::rc::Rc;
 use tungstenite::Message;
+use std::borrow::Borrow;
 
 
 pub enum Notification {
     UpdatePlayerList(SessionID),
     CustomToPlayer(String, String),
-    CustomToSession(SessionID, String)
+    CustomToSession(SessionID, String),
+    UpdateConnectionsAlive(Arc<atomic::AtomicI64>)
 }
 
 pub struct Notifier(Mutex<mpsc::Sender<Notification>>);
+
 
 impl Notifier {
     pub fn send(&self, msg: Notification) {
@@ -93,6 +96,7 @@ pub fn start(addr: SocketAddr) -> std::io::Result<Notifier> {
             std::thread::sleep(Duration::from_millis(1));
 
             // process notifications to send
+            handler.poll_messages();
             handler.handle_notifications();
 
         }
@@ -108,6 +112,8 @@ pub fn start(addr: SocketAddr) -> std::io::Result<Notifier> {
 
 
 type SharedWS = Rc<RefCell<WebSocket<TcpStream>>>;
+
+
 struct WebsocketHandler {
     message_queue: mpsc::Receiver<Notification>,
     clients_by_sid: HashMap<SessionID, Vec<SharedWS>>,
@@ -126,6 +132,17 @@ impl WebsocketHandler {
         }
     }
 
+    pub fn poll_messages(&mut self) {
+        for (_, bucket) in &self.clients_by_sid {
+            for ws in bucket {
+                match ws.borrow_mut().read_message() {
+                    Ok(msg) => info!("msg: {}", msg),
+                    Err(e) => {}
+                }
+            }
+        }
+    }
+
     pub fn handle_notifications(&mut self) {
         while let Ok(msg) = self.message_queue.try_recv() {
             match msg {
@@ -138,6 +155,38 @@ impl WebsocketHandler {
                             }
                         }
                     }
+                },
+                Notification::UpdateConnectionsAlive(res) => {
+                    warn!("Issued UpdateConnectionsAlive: Starting cleanup. may slow ws service \
+                    down, currently stored {} ws", self.clients_by_name.len());
+
+                    let mut toRemove: Vec<SharedWS> = Vec::new();
+                    let mut alive = 0u64;
+
+                    for (_, session_bucket) in &mut self.clients_by_sid {
+
+                        toRemove.extend(session_bucket.drain_filter(|ws| {
+                            let client: Ref<WebSocket<TcpStream>> = (**ws).borrow();
+                            if !(client.can_write() && client.can_read()) {
+                                true
+                            }
+                            else {
+                                alive += 1;
+                                false
+                            }
+                        }));
+
+
+                    }
+
+                    res.store(alive as i64, Ordering::Relaxed);
+                    info!("Updated shared alive-counter to {}, proceeding with deleting closed ws",
+                          alive);
+
+                    // delete from clients_by_sid
+                    self.clients_by_name.retain(|_, v| {
+                        !toRemove.iter().any(|ws|Rc::ptr_eq(ws, v))
+                    });
                 }
                 _ => {
                     warn!(target: WS_LOG_TARGET, "Unknown Notification-type: Maybe check if you \

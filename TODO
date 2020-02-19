@@ -1,0 +1,17 @@
+
+server:
+  api:
+    ✔ create get playerlist endpoint @started(20-02-19 12:51) @done(20-02-20 00:55) @lasted(12h5m)
+  ☐ admin panel
+  ☐ Create typed roles
+  notifier:
+    ☐ ! delete ws from hashmaps as soon as Messsage::Closed gets received
+  database:
+    ☐ add field to users so they can rejoin if accidently logged out
+    ✔ get users by session_id @started(20-02-19 13:31) @done(20-02-19 18:05) @lasted(4h34m33s)
+    ☐ verify table columns on start
+      ☐ user pragma query from rusqlite
+      
+
+client:
+  ✔ fetch playerlist @started(20-02-20 00:56) @done(20-02-20 00:56) @lasted(8s)

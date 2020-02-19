@@ -17,6 +17,9 @@ body {
 
     background-color: var(--background-color-1);
 }
+body * {
+    color: var(--contrast-color-1);
+}
 
 body.dark {
     --background-color-1: #1d1d1d;
@@ -24,14 +27,15 @@ body.dark {
     --contrast-color-1: #dbdbdb;
 }
 
-body.dark p {
-    color: var(--contrast-color-1);
-}
 
 .contrast-1 {
     color: var(--contrast-color-1);
 }
 
+.extendable-list {
+    border-radius: 4px;
+    background-color: var(--background-color-2);
+}
 
 
 nav {

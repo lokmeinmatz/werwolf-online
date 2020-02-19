@@ -1,4 +1,4 @@
-use rocket::{http, Route};
+use rocket::{http, Route, State, Request};
 use rocket::{request, response};
 use serde::{Deserialize};
 use log::{info};
@@ -8,7 +8,7 @@ pub mod token;
 
 
 // all mounts go to /api/v*/ base
-pub fn mount_auth_api() -> Vec<Route> {
+pub fn get_auth_api_routes() -> Vec<Route> {
     routes![get_status, post_connect]
 }
 
@@ -95,11 +95,6 @@ impl<'q> request::FromParam<'q> for SessionID {
     }
 }
 
-
-
-
-
-
 #[get("/status?<token>")]
 fn get_status(token: Option<token::AuthToken>) -> String {
     let s: String = match token {
@@ -119,6 +114,9 @@ fn get_status(token: Option<token::AuthToken>) -> String {
 use std::net::SocketAddr;
 use serde::export::{Formatter, TryFrom};
 use serde::export::fmt::Error;
+use crate::database::Database;
+use crate::notify::{Notifier, Notification};
+use rocket::request::{FromRequest, Outcome};
 
 #[derive(Deserialize)]
 struct ConnectData {
@@ -130,7 +128,8 @@ struct ConnectData {
 
 /// validates user connection request and if session exists and user is allowed to join, send jwt
 #[post("/connect", data = "<conn_data>")]
-fn post_connect(addr: SocketAddr, conn_data: json::Json<ConnectData>)
+fn post_connect(addr: SocketAddr, conn_data: json::Json<ConnectData>, db: State<Database>,
+                notifier: State<Notifier>)
                 -> response::status::Custom<String> {
 
     let conn_data = conn_data.into_inner();
@@ -148,23 +147,27 @@ fn post_connect(addr: SocketAddr, conn_data: json::Json<ConnectData>)
         Err(e) => return response::status::Custom(http::Status::BadRequest, e.to_string())
     };
 
-    // TODO test
-    if !sid.as_str().starts_with("1234") {
-        return response::status::Custom(http::Status::BadRequest, "Unknown SessionID".into());
+    match Database::maybe_add_player(db.get_locked_conn(), &conn_data.username, &sid) {
+        Ok(uid) => {
+            match token::gen_jwt(
+                conn_data.username,
+                uid,
+                &sid) {
+                Ok(jwt) => {
+
+                    // tell others that new player has connected
+                    notifier.send(Notification::UpdatePlayerList(sid));
+
+                    response::status::Custom(http::Status::Ok, jwt)
+
+                },
+                Err(_) => response::status::Custom(http::Status::InternalServerError, "Failed to generat token".into())
+            }
+        },
+        Err(emsg) => {
+            return response::status::Custom(http::Status::BadRequest, emsg);
+        }
     }
-    //response::status::Custom(http::Status::InternalServerError, "Authentification failed")
-
-    match token::gen_jwt(
-        conn_data.username,
-        &sid) {
-        Ok(jwt) => response::status::Custom(http::Status::Ok, jwt),
-        Err(_) => response::status::Custom(http::Status::InternalServerError, "Failed to generat token".into())
-    }
-
-
-
-
-
 
 
 }

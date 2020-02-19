@@ -1,7 +1,9 @@
 #![feature(proc_macro_hygiene, decl_macro)]
+#![feature(drain_filter)]
 
 #[macro_use]
 extern crate rocket;
+
 
 use log::{info, error, Level};
 use std::net::SocketAddr;
@@ -10,6 +12,9 @@ use rocket_contrib::serve::StaticFiles;
 use std::path::{Path};
 use rocket::response;
 use std::sync::atomic::{AtomicBool, Ordering};
+use serde::Serialize;
+use crate::api::auth::SessionID;
+use std::time::SystemTime;
 
 mod api;
 mod ingame;
@@ -17,6 +22,22 @@ mod database;
 mod notify;
 
 pub static SHOULD_TERMINATE: AtomicBool = AtomicBool::new(false);
+
+
+#[derive(Serialize)]
+pub struct PlayerData {
+    name: String,
+    // TODO typed roles
+    role: Option<String>
+}
+
+pub struct SessionData {
+    id: SessionID,
+    created: SystemTime,
+    active: bool,
+    settings: Option<String>
+}
+
 
 #[get("/")]
 fn start_get() -> Option<response::NamedFile> {

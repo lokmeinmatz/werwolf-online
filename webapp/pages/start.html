@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/start.css">
+    <script src="../src/base.ts"></script>
+    <script src="../src/start.ts"></script>
+</head>
+<body class="dark">
+    <nav>
+        <div class="menu-btn">
+            <div class="bar top"></div>
+            <div class="bar middle"></div>
+            <div class="bar bottom"></div>
+        </div>
+    </nav>
+    <aside class="closed">
+    </aside>
+    <main>
+        <form class="connect" action="/connect" method="POST">
+            <label for="uname" class="contrast-1">Username</label>
+            <input type="text" name="user-name" id="uname">
+            <label for="sid" class="contrast-1">Session-ID</label>
+            <input type="text" name="session-id" id="sid">
+            <input type="submit" class="connect-btn" value="connect">
+        </form>
+        <div class="last-session"></div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    --highlight-color-1: #1499ff;
+    --background-color-1: #ffffff;
+    --background-color-2: #dadada;
+    --contrast-color-1: #2c2c2c;
+
+    background-color: var(--background-color-1);
+}
+
+body.dark {
+    --background-color-1: #1d1d1d;
+    --background-color-2: #2e2e2e;
+    --contrast-color-1: #dbdbdb;
+}
+
+body.dark p {
+    color: var(--contrast-color-1);
+}
+
+.contrast-1 {
+    color: var(--contrast-color-1);
+}
+
+
+
+nav {
+    display: grid;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    padding-left: 10px;
+    background-color: var(--highlight-color-1);
+}
+
+.menu-btn {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.menu-btn .bar {
+    width: 40px;
+    height: 4px;
+    background-color: var(--contrast-color-1);
+    position: absolute;
+    transition: all 0.2s;
+}
+
+.menu-btn .bar.top {
+    transform: translate(0, 9px);
+}
+.menu-btn .bar.middle {
+    transform: translate(0, 19px);
+}
+.menu-btn .bar.bottom {
+    transform: translate(0, 29px);
+}
+
+.menu-btn.open .bar.top {
+    transform: translate(0, 19px) rotate(45deg);
+}
+.menu-btn.open .bar.middle {
+    opacity: 0;
+}
+.menu-btn.open .bar.bottom {
+    transform: translate(0, 19px) rotate(-45deg);
+}
+
+main {
+    height: calc(100vh - 60px);
+    margin-top: 60px;
+}
+
+aside {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    width: 80vw;
+    max-width: 400px;
+    height: 100vh;
+    background-color: var(--background-color-2);
+    transform: translateX(0%);
+    transition: transform 0.2s;
+}
+
+aside.closed {
+    transform: translateX(-100%);
+}

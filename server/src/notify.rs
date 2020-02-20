@@ -1,17 +1,20 @@
 use crate::api::auth::SessionID;
 use log::{error, info, warn};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::{TcpListener, TcpStream, SocketAddr};
 use std::sync::{mpsc, Mutex, Arc};
 use tungstenite::protocol::WebSocket;
-use std::cell::{Cell, RefCell, Ref};
+use std::cell::{Cell, RefCell, Ref, RefMut};
 use std::convert::TryFrom;
 use std::time::Duration;
 use std::sync::atomic::{self, Ordering};
 use tungstenite::handshake::server::ErrorResponse;
 use std::rc::Rc;
 use tungstenite::Message;
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
+use std::hash::{Hash, Hasher};
+use std::ops::Deref;
+use by_address::ByAddress;
 
 
 pub enum Notification {
@@ -99,6 +102,10 @@ pub fn start(addr: SocketAddr) -> std::io::Result<Notifier> {
             handler.poll_messages();
             handler.handle_notifications();
 
+            if handler.needs_cleanup() {
+                handler.clean_up()
+            }
+
         }
 
 
@@ -110,14 +117,13 @@ pub fn start(addr: SocketAddr) -> std::io::Result<Notifier> {
 
 }
 
-
 type SharedWS = Rc<RefCell<WebSocket<TcpStream>>>;
 
 
 struct WebsocketHandler {
     message_queue: mpsc::Receiver<Notification>,
     clients_by_sid: HashMap<SessionID, Vec<SharedWS>>,
-    clients_by_name: HashMap<String, SharedWS>
+    dead_sockets: HashSet<ByAddress<SharedWS>>
 }
 
 
@@ -128,19 +134,58 @@ impl WebsocketHandler {
         WebsocketHandler {
             message_queue: msg_queue,
             clients_by_sid: HashMap::new(),
-            clients_by_name: HashMap::new()
+            dead_sockets: HashSet::new()
         }
     }
 
     pub fn poll_messages(&mut self) {
-        for (_, bucket) in &self.clients_by_sid {
+        for (_, bucket) in &mut self.clients_by_sid {
             for ws in bucket {
-                match ws.borrow_mut().read_message() {
-                    Ok(msg) => info!("msg: {}", msg),
-                    Err(e) => {}
+                let mut ws_ref: RefMut<WebSocket<TcpStream>> = (**ws).borrow_mut();
+
+                if !(ws_ref.can_read() && ws_ref.can_write()) {
+                    self.dead_sockets.insert(ByAddress(ws.clone()));
+                    info!("Ws cant read or write: {:?}", ws_ref.get_ref().peer_addr());
+                    continue;
+                }
+
+                match ws_ref.read_message() {
+                    Ok(Message::Close(_)) => {
+                        info!("Close message from: {:?}", ws_ref.get_ref().peer_addr());
+                        self.dead_sockets.insert(ByAddress(ws.clone()));
+                    },
+                    _ => {}
                 }
             }
         }
+    }
+
+    pub fn needs_cleanup(&self) -> bool {
+        self.dead_sockets.len() > 0
+    }
+
+    pub fn clean_up(&mut self) {
+        if self.dead_sockets.len() == 0 {
+            info!("No sockets to remove");
+            return;
+        }
+
+        warn!("Called clean_up: May slow ws service down! Removing {} ws",
+              self.dead_sockets.len());
+
+        let mut dead_sockets = std::mem::replace(&mut self.dead_sockets, HashSet::new());
+
+        for (sid, session_bucket) in &mut self.clients_by_sid {
+
+            session_bucket.drain_filter(|ws| {
+                // TODO optimize so we dont have to colne the rc
+                dead_sockets.contains(&ByAddress(ws.clone()))
+            });
+        }
+
+        info!("Sucessfully cleaned up dead socekts :D");
+
+
     }
 
     pub fn handle_notifications(&mut self) {
@@ -149,7 +194,7 @@ impl WebsocketHandler {
                 Notification::UpdatePlayerList(sid) => {
                     if let Some(clients) = self.clients_by_sid.get(&sid) {
                         for client_refcell in clients {
-                            let mut client = client_refcell.borrow_mut();
+                            let mut client = (**client_refcell).borrow_mut();
                             if client.can_write() {
                                 client.write_message(Message::Text("update.playerlist".to_owned()));
                             }
@@ -157,36 +202,16 @@ impl WebsocketHandler {
                     }
                 },
                 Notification::UpdateConnectionsAlive(res) => {
-                    warn!("Issued UpdateConnectionsAlive: Starting cleanup. may slow ws service \
-                    down, currently stored {} ws", self.clients_by_name.len());
 
-                    let mut toRemove: Vec<SharedWS> = Vec::new();
-                    let mut alive = 0u64;
+                    let mut alive = 0;
 
                     for (_, session_bucket) in &mut self.clients_by_sid {
-
-                        toRemove.extend(session_bucket.drain_filter(|ws| {
-                            let client: Ref<WebSocket<TcpStream>> = (**ws).borrow();
-                            if !(client.can_write() && client.can_read()) {
-                                true
-                            }
-                            else {
-                                alive += 1;
-                                false
-                            }
-                        }));
-
-
+                        alive += session_bucket.len();
                     }
 
                     res.store(alive as i64, Ordering::Relaxed);
-                    info!("Updated shared alive-counter to {}, proceeding with deleting closed ws",
+                    info!("Updated shared alive-counter to {}",
                           alive);
-
-                    // delete from clients_by_sid
-                    self.clients_by_name.retain(|_, v| {
-                        !toRemove.iter().any(|ws|Rc::ptr_eq(ws, v))
-                    });
                 }
                 _ => {
                     warn!(target: WS_LOG_TARGET, "Unknown Notification-type: Maybe check if you \
@@ -201,15 +226,15 @@ impl WebsocketHandler {
     String) {
         let rcd_ws: SharedWS = Rc::new(RefCell::new(socket));
         self.clients_by_sid.entry(session)
-            .or_insert_with(|| Vec::with_capacity(1)).push(rcd_ws.clone());
-
-        self.clients_by_name.insert(username, rcd_ws);
+            .or_insert_with(|| Vec::with_capacity(1)).push(rcd_ws);
     }
 
     pub fn terminate(mut self) {
         info!(target: WS_LOG_TARGET, "Terminating: closing all ws-connections...");
-        for client in self.clients_by_name.values_mut() {
-            client.borrow_mut().close(None);
+        for bucket in self.clients_by_sid.values_mut() {
+            for client in bucket {
+                (**client).borrow_mut().close(None);
+            }
         }
         info!(target: WS_LOG_TARGET, "Terminated!");
     }

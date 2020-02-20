@@ -3,6 +3,7 @@ export default class ServerNotifications {
     private eventCallbacks: Map<string, () => void>
 
     constructor() {
+        console.log("Connectiong for notifications...")
         let token = localStorage.getItem("token")
 
         if (token == null) throw "No token - not associated with a session"

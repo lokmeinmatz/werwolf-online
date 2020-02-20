@@ -5,7 +5,7 @@ server:
   ☐ admin panel
   ☐ Create typed roles
   notifier:
-    ☐ ! delete ws from hashmaps as soon as Messsage::Closed gets received
+    ✔ ! delete ws from hashmaps as soon as Messsage::Closed gets received @done(20-02-21 00:20)
   database:
     ☐ add field to users so they can rejoin if accidently logged out
     ✔ get users by session_id @started(20-02-19 13:31) @done(20-02-19 18:05) @lasted(4h34m33s)
@@ -14,4 +14,11 @@ server:
       
 
 client:
-  ✔ fetch playerlist @started(20-02-20 00:56) @done(20-02-20 00:56) @lasted(8s)
+  ingame:
+    ✔ fetch playerlist @started(20-02-20 00:56) @done(20-02-20 00:56) @lasted(8s)
+    ☐ Display player list
+  admin:
+    ☐ create basic admin panel
+      ☐ session creatable
+      ☐ per session: view players
+        ☐ block players

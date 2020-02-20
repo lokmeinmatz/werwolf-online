@@ -30,6 +30,7 @@ async function updatePlayerList() {
 }
 
 window.addEventListener("load", () => {
+    
     const notifications = new ServerNotifications()
 
     notifications.registerEvent("update.playerlist", () => {

@@ -16,7 +16,7 @@ server:
 client:
   ingame:
     ✔ fetch playerlist @started(20-02-20 00:56) @done(20-02-20 00:56) @lasted(8s)
-    ☐ Display player list
+    ☐ Display player list @started(20-02-22 12:12)
   admin:
     ☐ create basic admin panel
       ☐ session creatable

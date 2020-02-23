@@ -1,17 +1,17 @@
 import ServerNotifications from "./websocket"
-import {getCurrentClientTokenString} from "./utils"
+import {getCurrentAdminTokenString} from "./utils"
 import { ExtendableList } from "./ui"
 
-if (getCurrentClientTokenString() == null) {
+if (getCurrentAdminTokenString() == null) {
     
-    window.location.assign(`/?error=NoToken`)
+    window.location.assign(`/ctrl/?error=NoToken`)
 }
 
 let playerListDom: ExtendableList<PlayerData>
 
 async function updatePlayerList() {
 
-    const token = getCurrentClientTokenString()
+    const token = getCurrentAdminTokenString()
 
     if(!token) return
 

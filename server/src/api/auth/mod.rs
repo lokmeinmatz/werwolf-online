@@ -1,15 +1,17 @@
-use rocket::{http, Route, State, Request};
+use rocket::{http, Route, State};
 use rocket::{request, response};
 use serde::{Deserialize};
 use log::{info};
 use rocket_contrib::json;
 
 pub mod token;
+pub mod admin_token;
 
+pub(crate) static DEV_SECRET: &str = "dev-secret";
 
 // all mounts go to /api/v*/ base
 pub fn get_auth_api_routes() -> Vec<Route> {
-    routes![get_status, post_connect]
+    routes![get_status, connect_client, connect_admin]
 }
 
 
@@ -116,7 +118,6 @@ use serde::export::{Formatter, TryFrom};
 use serde::export::fmt::Error;
 use crate::database::Database;
 use crate::notify::{Notifier, Notification};
-use rocket::request::{FromRequest, Outcome};
 
 #[derive(Deserialize)]
 struct ConnectData {
@@ -127,8 +128,8 @@ struct ConnectData {
 
 
 /// validates user connection request and if session exists and user is allowed to join, send jwt
-#[post("/connect", data = "<conn_data>")]
-fn post_connect(addr: SocketAddr, conn_data: json::Json<ConnectData>, db: State<Database>,
+#[post("/connect/client", data = "<conn_data>")]
+fn connect_client(addr: SocketAddr, conn_data: json::Json<ConnectData>, db: State<Database>,
                 notifier: State<Notifier>)
                 -> response::status::Custom<String> {
 
@@ -161,7 +162,8 @@ fn post_connect(addr: SocketAddr, conn_data: json::Json<ConnectData>, db: State<
                     response::status::Custom(http::Status::Ok, jwt)
 
                 },
-                Err(_) => response::status::Custom(http::Status::InternalServerError, "Failed to generat token".into())
+                Err(_) => response::status::Custom(http::Status::InternalServerError, "Failed to \
+                generate token".into())
             }
         },
         Err(emsg) => {
@@ -169,5 +171,32 @@ fn post_connect(addr: SocketAddr, conn_data: json::Json<ConnectData>, db: State<
         }
     }
 
+}
 
+
+#[derive(Deserialize)]
+struct ConnectAdminData {
+    password: String
+}
+
+
+/// validates user connection request and if session exists and user is allowed to join, send jwt
+#[post("/connect/ctrl", data = "<conn_data>")]
+fn connect_admin(addr: SocketAddr, conn_data: json::Json<ConnectAdminData>)
+                  -> response::status::Custom<String> {
+
+    let conn_data = conn_data.into_inner();
+
+    info!("new admin connect request from {} with pwd {}",
+          addr,
+          &conn_data.password
+    );
+
+    match admin_token::gen_admin_jwt() {
+        Ok(jwt) => {
+            response::status::Custom(http::Status::Ok, jwt)
+        },
+        Err(_) => response::status::Custom(http::Status::InternalServerError, "Failed to generate\
+         token".into())
+    }
 }

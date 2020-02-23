@@ -4,16 +4,14 @@ use std::collections::{HashMap, HashSet};
 use std::net::{TcpListener, TcpStream, SocketAddr};
 use std::sync::{mpsc, Mutex, Arc};
 use tungstenite::protocol::WebSocket;
-use std::cell::{Cell, RefCell, Ref, RefMut};
+use std::cell::{Cell, RefCell, RefMut};
 use std::convert::TryFrom;
 use std::time::Duration;
 use std::sync::atomic::{self, Ordering};
 use tungstenite::handshake::server::ErrorResponse;
 use std::rc::Rc;
 use tungstenite::Message;
-use std::borrow::{Borrow, BorrowMut};
-use std::hash::{Hash, Hasher};
-use std::ops::Deref;
+use std::borrow::{BorrowMut};
 use by_address::ByAddress;
 
 

@@ -1,9 +1,7 @@
 use rocket::{Route, State};
 use rocket::http::uri::Origin;
 use crate::notify::{Notifier, Notification};
-use crate::api::auth::SessionID;
 use log::{error};
-use std::convert::TryFrom;
 use rocket_contrib::json::Json;
 use serde::Serialize;
 use std::sync::{Arc, atomic::AtomicI64};

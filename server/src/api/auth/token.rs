@@ -23,7 +23,6 @@ pub enum AuthClaimError {
     Blocked,
 }
 
-static DEV_SECRET: &str = "dev-secret";
 
 pub fn gen_jwt(username: String, user_id: u32, sid: &SessionID) -> Result<String, ()> {
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -40,7 +39,7 @@ pub fn gen_jwt(username: String, user_id: u32, sid: &SessionID) -> Result<String
         session_id: sid.as_str().to_owned(),
     };
 
-    jwt::encode(&jwt::Header::default(), &norole, DEV_SECRET.as_bytes()).map_err(|_| ())
+    jwt::encode(&jwt::Header::default(), &norole, super::DEV_SECRET.as_bytes()).map_err(|_| ())
 }
 
 #[derive(Debug)]
@@ -86,7 +85,7 @@ impl TryFrom<&str> for AuthToken {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         // try to decode jwt
         let tdata: TokenData<BasicAuthClaims> =
-            jwt::decode(value, DEV_SECRET.as_bytes(), &Validation::default()).map_err(|e| {
+            jwt::decode(value, super::DEV_SECRET.as_bytes(), &Validation::default()).map_err(|e| {
                 warn!("Deconding of jwt failed: {}", e.to_string());
                 ()
             })?;
@@ -101,7 +100,7 @@ impl<'r> request::FromFormValue<'r> for AuthToken {
         // try to decode jwt
         let tdata: TokenData<BasicAuthClaims> = jwt::decode(
             form_value.as_str(),
-            DEV_SECRET.as_bytes(),
+            super::DEV_SECRET.as_bytes(),
             &Validation::default(),
         )
         .map_err(|_| "No valid JWT")?;

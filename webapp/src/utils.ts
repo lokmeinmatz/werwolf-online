@@ -20,16 +20,30 @@ export function parseJWTokenData(jwt: string | null): TokenData | null {
     return null
 }
 
-export function updateToken(token: string) {
+export function updateClientToken(token: string) {
     localStorage.setItem("token", token)
     document.cookie = `token=${token}`
 }
 
-export function getCurrentTokenString() : string | null {
+export function getCurrentClientTokenString() : string | null {
     return localStorage.getItem("token")
 }
 
-export function getCurrentTokenData() : TokenData | null {
+export function getCurrentClientTokenData() : TokenData | null {
+    let jwt = localStorage.getItem("token")
+    return parseJWTokenData(jwt)
+}
+
+export function updateAdminToken(token: string) {
+    localStorage.setItem("token", token)
+    document.cookie = `token=${token}`
+}
+
+export function getCurrentAdminTokenString() : string | null {
+    return localStorage.getItem("token")
+}
+
+export function getCurrentAdminTokenData() : TokenData | null {
     let jwt = localStorage.getItem("token")
     return parseJWTokenData(jwt)
 }

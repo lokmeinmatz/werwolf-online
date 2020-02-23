@@ -46,7 +46,7 @@ window.addEventListener("load", () => {
         console.log("trying to connect...")
         console.log(reqBody)
         btn.classList.add("loading")
-        const res = await fetch("/api/v1/auth/connect", {
+        const res = await fetch("/api/v1/auth/connect/client", {
             method: "POST",
             body: JSON.stringify(reqBody),
             headers: {

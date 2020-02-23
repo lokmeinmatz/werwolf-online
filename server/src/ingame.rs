@@ -3,7 +3,6 @@ use rocket::response;
 
 use log::{info, warn, error};
 
-use crate::api;
 use crate::database::Database;
 use crate::api::auth::token::AuthToken;
 

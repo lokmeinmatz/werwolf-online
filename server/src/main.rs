@@ -20,6 +20,7 @@ mod api;
 mod ingame;
 mod database;
 mod notify;
+mod controller;
 
 pub static SHOULD_TERMINATE: AtomicBool = AtomicBool::new(false);
 
@@ -90,6 +91,7 @@ fn main() -> std::io::Result<()> {
         .mount("/api/v1", api::get_current_api_routes());
 
     rocket = ingame::mount_ingame_api(rocket);
+    rocket = controller::mount_controller_api(rocket);
 
     rocket.launch();
     Err(std::io::ErrorKind::Interrupted.into())

@@ -12,7 +12,8 @@ html, body {
 body {
     --highlight-color-1: #1499ff;
     --background-color-1: #ffffff;
-    --background-color-2: #dadada;
+    --background-color-2: #f0f0f0;
+    --background-color-3: #dfdfdf;
     --contrast-color-1: #2c2c2c;
 
     background-color: var(--background-color-1);
@@ -24,6 +25,7 @@ body * {
 body.dark {
     --background-color-1: #1d1d1d;
     --background-color-2: #2e2e2e;
+    --background-color-3: #414141;
     --contrast-color-1: #dbdbdb;
 }
 
@@ -35,6 +37,35 @@ body.dark {
 .extendable-list {
     border-radius: 4px;
     background-color: var(--background-color-2);
+    min-width: 150px;
+}
+
+.extendable-list h2 {
+    margin: 10px;
+}
+
+.extendable-list ul {
+    padding: 0;
+    margin: 0;
+    padding: 0px 10px;
+}
+
+.extendable-list li {
+    list-style: none;
+}
+
+.extendable-list li.hidden {
+    display: none;
+}
+
+.extendable-list .extend-bar {
+    border-radius: 4px;
+    padding: 10px;
+    background-color: var(--background-color-3);
+}
+.extendable-list .extend-bar button {
+    margin: 0;
+    padding: 0;
 }
 
 

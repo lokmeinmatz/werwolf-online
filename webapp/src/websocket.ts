@@ -1,12 +1,35 @@
-export default class ServerNotifications {
+import {getCurrentAdminTokenString, getCurrentClientTokenString} from "./utils"
+
+
+export enum NotificationType {
+    PlayerConnection,
+    ControllerConnection
+}
+
+function getDisplayName(nt: NotificationType) : string {
+    switch (nt) {
+        case NotificationType.PlayerConnection:
+            return "PlayerConnection"
+        case NotificationType.ControllerConnection:
+            return "ControllerConnection"
+        default:
+            break;
+    }
+}
+
+export class ServerNotifications {
     private ws: WebSocket
+    private type: NotificationType
     private eventCallbacks: Map<string, () => void>
 
-    constructor() {
-        console.log("Connectiong for notifications...")
-        let token = localStorage.getItem("token")
+    constructor(type: NotificationType) {
 
-        if (token == null) throw "No token - not associated with a session"
+        this.type = type
+
+        console.log(`Connectiong for notifications with type ${getDisplayName(type)}...`)
+        let token = (type == NotificationType.PlayerConnection) ? getCurrentClientTokenString() : getCurrentAdminTokenString()
+
+        if (token == null) throw "No token - not associated with a session or as admin"
         this.ws = new WebSocket(`ws:localhost:3031/${token}`)   
 
         this.ws.onopen = console.log

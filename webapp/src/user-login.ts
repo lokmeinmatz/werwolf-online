@@ -1,5 +1,5 @@
 import {getErrorMessage} from './errors'
-import {getCurrentTokenData, updateToken} from './utils'
+import {getCurrentClientTokenData, updateClientToken} from './utils'
 
 window.addEventListener("load", () => {
     console.log("welcome to the start page")
@@ -58,7 +58,7 @@ window.addEventListener("load", () => {
             // store jwt
             const jwt = await res.text()
 
-            updateToken(jwt)
+            updateClientToken(jwt)
 
             console.log(`allowed to join`)
             window.location.assign(`/game/`)
@@ -73,7 +73,7 @@ window.addEventListener("load", () => {
     
 
     // check if old token is set
-    const tokendata = getCurrentTokenData()
+    const tokendata = getCurrentClientTokenData()
 
     if (tokendata) {
         
@@ -82,14 +82,14 @@ window.addEventListener("load", () => {
         reuse.textContent = "Wiederverwenden"
 
         reuse.onclick = () => {
-            form.elements["uname"].value = tokendata.username
+            form.elements["uname"].value = tokendata.sub
             form.elements["sid"].value = tokendata.session_id
 
             validateInput()
         }
 
 
-        p.textContent = `Letztes Spiel als ${tokendata.username} in Session ${tokendata.session_id}`
+        p.textContent = `Letztes Spiel als ${tokendata.sub} in Session ${tokendata.session_id}`
         document.querySelector(".last-session").append(p, reuse)
         
     }

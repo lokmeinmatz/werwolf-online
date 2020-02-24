@@ -16,4 +16,3 @@ rocket_contrib = "0.4.2"
 rusqlite = {version = "0.21.0", features = ["bundled"]}
 tungstenite = "0.10.1"
 ctrlc = "3.1.4"
-by_address = "1.0.4"

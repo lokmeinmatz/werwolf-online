@@ -81,7 +81,7 @@ impl<'a, 'r> request::FromRequest<'a, 'r> for AdminToken {
         }
 
         // test if was stored in cookies
-        match request.cookies().get("token") {
+        match request.cookies().get("admintoken") {
             Some(token_cookie) => {
                 match AdminToken::try_from(token_cookie.value()) {
                     Ok(at) => return Outcome::Success(at),

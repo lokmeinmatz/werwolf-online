@@ -1,6 +1,6 @@
-import ServerNotifications from "./websocket"
-import {getCurrentAdminTokenString} from "./utils"
-import { ExtendableList } from "./ui"
+import {ServerNotifications, NotificationType} from "../websocket"
+import {getCurrentAdminTokenString} from "../utils"
+import { ExtendableList } from "../ui"
 
 if (getCurrentAdminTokenString() == null) {
     
@@ -36,7 +36,7 @@ interface PlayerData {
 
 window.addEventListener("load", () => {
     
-    const notifications = new ServerNotifications()
+    const notifications = new ServerNotifications(NotificationType.ControllerConnection)
 
     notifications.registerEvent("update.playerlist", () => {
         console.log("got update.playerlist")

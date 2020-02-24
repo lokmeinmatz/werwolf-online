@@ -1,21 +1,20 @@
-interface TokenData {
-    username: string,
+interface ClientTokenData {
+    type: string
+    sub: string,
     session_id: string
 }
 
-export function parseJWTokenData(jwt: string | null): TokenData | null {
+interface AdminTokenData {
+    type: string
+}
+
+export function parseJWTokenData<T>(jwt: string | null): T | null {
     if (jwt) {
         const splitted = jwt.split(".")
         
         if (splitted.length != 3) return null
 
-        let payload: any = JSON.parse(atob(splitted[1]))
-        if (payload && payload.sub && payload.session_id) {
-            return {
-                username: payload.sub,
-                session_id: payload.session_id
-            }
-        }
+        return JSON.parse(atob(splitted[1]))
     }
     return null
 }
@@ -29,21 +28,21 @@ export function getCurrentClientTokenString() : string | null {
     return localStorage.getItem("token")
 }
 
-export function getCurrentClientTokenData() : TokenData | null {
+export function getCurrentClientTokenData() : ClientTokenData | null {
     let jwt = localStorage.getItem("token")
     return parseJWTokenData(jwt)
 }
 
 export function updateAdminToken(token: string) {
-    localStorage.setItem("token", token)
-    document.cookie = `token=${token}`
+    localStorage.setItem("admintoken", token)
+    document.cookie = `admintoken=${token}`
 }
 
 export function getCurrentAdminTokenString() : string | null {
-    return localStorage.getItem("token")
+    return localStorage.getItem("admintoken")
 }
 
-export function getCurrentAdminTokenData() : TokenData | null {
-    let jwt = localStorage.getItem("token")
+export function getCurrentAdminTokenData() : AdminTokenData | null {
+    let jwt = localStorage.getItem("admintoken")
     return parseJWTokenData(jwt)
 }

@@ -1,4 +1,4 @@
-import ServerNotifications from "./websocket"
+import {ServerNotifications, NotificationType} from "./websocket"
 import {getCurrentClientTokenString} from "./utils"
 import { ExtendableList } from "./ui"
 
@@ -36,7 +36,7 @@ interface PlayerData {
 
 window.addEventListener("load", () => {
     
-    const notifications = new ServerNotifications()
+    const notifications = new ServerNotifications(NotificationType.PlayerConnection)
 
     notifications.registerEvent("update.playerlist", () => {
         console.log("got update.playerlist")

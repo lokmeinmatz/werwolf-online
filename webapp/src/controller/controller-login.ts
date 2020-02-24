@@ -1,5 +1,12 @@
-import {getErrorMessage} from './errors'
-import {ge, updateToken} from './utils'
+import {getErrorMessage} from '../errors'
+import {getCurrentAdminTokenString, updateAdminToken} from '../utils'
+
+
+
+    // check if old token is set
+if(getCurrentAdminTokenString() != null) {
+
+}
 
 window.addEventListener("load", () => {
     console.log("welcome to the admin login page")
@@ -42,7 +49,7 @@ window.addEventListener("load", () => {
 
 
 
-        console.log("trying to connect...")
+        console.log("trying to connect as admin...")
         console.log(reqBody)
         btn.classList.add("loading")
         const res = await fetch("/api/v1/auth/connect/ctrl", {
@@ -57,10 +64,10 @@ window.addEventListener("load", () => {
             // store jwt
             const jwt = await res.text()
 
-            updateToken(jwt)
+            updateAdminToken(jwt)
 
             console.log(`allowed to control`)
-            //window.location.assign(`/ctrl/`)
+            window.location.assign(`/ctrl/overview`)
         } 
         else {
             // no valid login
@@ -71,26 +78,6 @@ window.addEventListener("load", () => {
     })
     
 
-    // check if old token is set
-    const tokendata = getCurrentTokenData()
 
-    if (tokendata) {
-        
-        let p = document.createElement("p")
-        let reuse = document.createElement("button")
-        reuse.textContent = "Wiederverwenden"
-
-        reuse.onclick = () => {
-            form.elements["uname"].value = tokendata.username
-            form.elements["sid"].value = tokendata.session_id
-
-            validateInput()
-        }
-
-
-        p.textContent = `Letztes Spiel als ${tokendata.username} in Session ${tokendata.session_id}`
-        document.querySelector(".last-session").append(p, reuse)
-        
-    }
 
 })

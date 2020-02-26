@@ -210,11 +210,13 @@ impl WebsocketHandler {
             self.dead_sockets.len()
         );
 
-        self.dead_sockets.sort_unstable();
-
+        self.dead_sockets.sort_unstable_by(|a, b| b.cmp(a));
+        info!("{:?}", self.dead_sockets);
         for &d_s_idx in &self.dead_sockets {
             self.connections.remove(d_s_idx);
         }
+
+        self.dead_sockets.clear();
 
         info!("Sucessfully cleaned up dead sockets :D");
     }

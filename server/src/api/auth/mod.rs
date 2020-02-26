@@ -85,7 +85,9 @@ impl<'q> request::FromParam<'q> for SessionID {
         }
         let sid: String = param.url_decode_lossy();
 
-        if !sid.chars().all(|c| c.is_digit(10) || (c.is_alphabetic() && c.is_uppercase())) {
+        info!("raw sid: {}", sid);
+
+        if !sid.chars().all(|c| c.is_ascii_digit() || (c.is_ascii_alphabetic() && c.is_ascii_uppercase())) {
             return Err("sessionID must by uppercase letters or digits (radix 10)");
         }
 

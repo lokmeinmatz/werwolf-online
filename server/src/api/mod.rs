@@ -8,14 +8,17 @@ use std::sync::{Arc, atomic::AtomicI64};
 use crate::database::Database;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
+use log::info;
 
 pub mod auth;
 pub mod session;
 
+// TODO is this working?
 fn extend_with_base(base: Origin, mut routes: Vec<Route>) -> Vec<Route> {
     for mut route in &mut routes {
         let inner_uri = route.uri.clone();
-        route.set_uri(base.clone(), inner_uri);
+        route.set_uri(base.clone(), inner_uri).unwrap();
+        info!("extended {}", route.uri.path());
     }
 
     routes
@@ -32,7 +35,7 @@ pub fn get_current_api_routes() -> Vec<Route> {
 
 
     // mount session
-    let session_base = Origin::parse("/session").unwrap();
+    let session_base = Origin::parse("/sessions").unwrap();
     routes.append(&mut extend_with_base(session_base, session::get_session_api_routes()));
 
 

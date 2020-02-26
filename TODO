@@ -1,5 +1,11 @@
 
 server:
+  HIGH PRIORITY:
+    ☐ FIX uri parsing
+      API calls to /api/v1/sessions/<sid>/.. give "sessions" instead of the <sid> param to parse
+      => maybe rebasing is wrong or need to recalculate dynamic params???
+      ☐ create simplified example for reddit
+    
   api:
     ✔ create get playerlist endpoint @started(20-02-19 12:51) @done(20-02-20 00:55) @lasted(12h5m)
   ☐ admin panel
@@ -16,9 +22,10 @@ server:
 client:
   ingame:
     ✔ fetch playerlist @started(20-02-20 00:56) @done(20-02-20 00:56) @lasted(8s)
-    ☐ Display player list @started(20-02-22 12:12)
+    ✔ Display player list @started(20-02-22 12:12) @done(20-02-26 22:47) @lasted(4d10h35m)
   admin:
-    ☐ create basic admin panel
-      ☐ session creatable
-      ☐ per session: view players
-        ☐ block players
+    ☐ password protection
+    ☐ create basic admin panel @started(20-02-26 22:51)
+      ☐ display sessions @started(20-02-26 22:51)
+    ☐ per session: view players
+      ☐ block players

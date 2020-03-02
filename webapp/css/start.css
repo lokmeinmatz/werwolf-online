@@ -20,6 +20,10 @@ form.connect * {
     padding: 2px;
 }
 
+form.connect input {
+    color: black;
+}
+
 form.connect .connect-btn {
     background-color: greenyellow;
     color: #202020;

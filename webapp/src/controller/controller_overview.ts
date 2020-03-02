@@ -15,6 +15,7 @@ async function updateSessionList() {
 
     if(!token) return
 
+    console.log("requesting session list")
 
     let req_headers = new Headers()
     req_headers.append("Authorization", `Bearer ${token}`)

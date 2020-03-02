@@ -1,6 +1,6 @@
 use std::sync::{Mutex, MutexGuard};
 use std::sync::Arc;
-use rusqlite::{Connection, params, NO_PARAMS};
+use rusqlite::{Connection, params, NO_PARAMS, Row};
 use std::path::Path;
 use log::{error, info};
 use crate::api::auth::SessionID;
@@ -62,6 +62,12 @@ impl Database {
                 })
             }).ok()
 
+    }
+
+    pub fn get_all_sessions<T: Sized>(conn: MutexGuard<Connection>, extractor: fn(&Row) -> rusqlite::Result<T>) -> Vec<T> {
+        let mut prep = conn.prepare("SELECT * FROM sessions")?;
+
+        prep.query_map(NO_PARAMS,extractor).unwrap().collect()
     }
 
     pub fn get_sessions_active(conn: MutexGuard<Connection>) -> u32 {

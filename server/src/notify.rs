@@ -1,6 +1,5 @@
 use crate::api::auth::SessionID;
 use log::{error, info, warn};
-use std::borrow::BorrowMut;
 use std::cell::Cell;
 use std::convert::TryFrom;
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -77,11 +76,11 @@ pub fn start(addr: SocketAddr) -> std::io::Result<Notifier> {
                                 .unwrap();
                             info!("Parsing {}", uri_path);
                             // parse
-                            use crate::api::auth::token::AuthToken;
-                            match AuthToken::try_from(uri_path) {
+                            use crate::api::auth::PlayerAuthToken;
+                            match PlayerAuthToken::try_from(uri_path) {
                                 Ok(at) => {
                                     info!(target: WS_LOG_TARGET, "got valid request: {:?}", &at);
-                                    conn_data.set(Some(Some(at.inner().1)));
+                                    conn_data.set(Some(Some(at.session_id)));
                                     return Ok(res);
                                 }
                                 Err(_) => {
@@ -93,16 +92,14 @@ pub fn start(addr: SocketAddr) -> std::io::Result<Notifier> {
                                 }
                             }
 
-                            use crate::api::auth::admin_token::AdminToken;
-                            match AdminToken::try_from(uri_path) {
+                            use crate::api::auth::AdminAuthToken;
+                            match AdminAuthToken::try_from(uri_path) {
                                 Ok(at) => {
                                     info!("Got valid admin request: {:?}", &at);
                                     conn_data.set(Some(None));
                                     return Ok(res);
                                 }
-                                Err(_) => {
-                                    error!(target: WS_LOG_TARGET, "No valid admin token")
-                                }
+                                Err(_) => error!(target: WS_LOG_TARGET, "No valid admin token"),
                             }
 
                             Err(ErrorResponse::new(Some("Invalid token".to_owned())))
@@ -236,11 +233,12 @@ impl WebsocketHandler {
                     }
                 }
                 Notification::UpdateConnectionsAlive(res) => {
-
-
                     res.store(self.connections.len() as i64, Ordering::Relaxed);
-                    info!(target: WS_LOG_TARGET, "Updated shared alive-counter to {}", self
-                        .connections.len() );
+                    info!(
+                        target: WS_LOG_TARGET,
+                        "Updated shared alive-counter to {}",
+                        self.connections.len()
+                    );
                 }
                 _ => {
                     warn!(

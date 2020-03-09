@@ -4,54 +4,51 @@
 #[macro_use]
 extern crate rocket;
 
-
-use log::{info, error, Level};
-use std::net::SocketAddr;
-use rocket::{Config};
-use rocket_contrib::serve::StaticFiles;
-use std::path::{Path};
-use rocket::response;
-use std::sync::atomic::{AtomicBool, Ordering};
-use serde::Serialize;
 use crate::api::auth::SessionID;
+use log::{error, info, Level};
+use rocket::response;
+use rocket::Config;
+use rocket_contrib::serve::StaticFiles;
+use serde::Serialize;
+use std::net::SocketAddr;
+use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::SystemTime;
 
 mod api;
-mod ingame;
-mod database;
-mod notify;
 mod controller;
+mod database;
+mod ingame;
+mod notify;
 
 pub static SHOULD_TERMINATE: AtomicBool = AtomicBool::new(false);
-
 
 #[derive(Serialize)]
 pub struct PlayerData {
     name: String,
     // TODO typed roles
-    role: Option<String>
+    role: Option<String>,
 }
 
 pub struct SessionData {
     id: SessionID,
     created: SystemTime,
     active: bool,
-    settings: Option<String>
+    settings: Option<String>,
 }
-
 
 #[get("/")]
 fn start_get() -> Option<response::NamedFile> {
     response::NamedFile::open("../webapp/dist/start.html").ok()
 }
 
-
 fn main() -> std::io::Result<()> {
     simple_logger::init_with_level(Level::Info).unwrap();
 
     ctrlc::set_handler(move || {
         SHOULD_TERMINATE.store(true, Ordering::Relaxed);
-    }).expect("Error setting Ctrl-C handler");
+    })
+    .expect("Error setting Ctrl-C handler");
 
     info!("Starting server...");
     let addr: SocketAddr = ([127, 0, 0, 1], 3030).into();
@@ -76,22 +73,20 @@ fn main() -> std::io::Result<()> {
     ws_addr.set_port(3031);
     let notifier = notify::start(ws_addr)?;
 
-
     let mut config = Config::development();
     config.set_port(3030);
     config.set_workers(4);
     config.set_address("0.0.0.0");
 
-    let mut rocket =
-    rocket::custom(config)
+    let mut rocket = rocket::custom(config)
         .manage(db)
         .manage(notifier)
         .mount("/", routes![start_get])
-        .mount("/static", static_files)
-        .mount("/api/v1", api::get_current_api_routes());
+        .mount("/static", static_files);
 
-    rocket = ingame::mount_ingame_api(rocket);
-    rocket = controller::mount_controller_api(rocket);
+    rocket = ingame::mount_ingame_pages(rocket);
+    rocket = controller::mount_controller_pages(rocket);
+    rocket = api::mount_current_api_routes(rocket);
 
     rocket.launch();
     Err(std::io::ErrorKind::Interrupted.into())

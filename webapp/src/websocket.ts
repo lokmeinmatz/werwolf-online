@@ -1,4 +1,4 @@
-import {getCurrentAdminTokenString, getCurrentClientTokenString} from "./utils"
+import {getCurrentTokenString} from "./utils"
 
 
 export enum NotificationType {
@@ -27,7 +27,7 @@ export class ServerNotifications {
         this.type = type
 
         console.log(`Connectiong for notifications with type ${getDisplayName(type)}...`)
-        let token = (type == NotificationType.PlayerConnection) ? getCurrentClientTokenString() : getCurrentAdminTokenString()
+        let token = getCurrentTokenString()
 
         if (token == null) throw "No token - not associated with a session or as admin"
         this.ws = new WebSocket(`ws:localhost:3031/${token}`)   

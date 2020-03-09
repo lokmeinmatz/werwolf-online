@@ -1,11 +1,50 @@
-interface ClientTokenData {
-    type: string
-    sub: string,
-    session_id: string
+interface BasicAuthData {
+    exp: number,
+    auth_level: "player" | "control"
 }
 
-interface AdminTokenData {
-    type: string
+interface PlayerAuthData extends BasicAuthData {
+    user_id: number,
+    session_id: string,
+    user_name: string,
+    role: string
+}
+
+interface MaybePlayerAuthData extends BasicAuthData {
+    user_id?: number,
+    session_id?: string,
+    user_name?: string,
+    role?: string
+}
+
+interface AdminAuthData extends BasicAuthData {
+}
+
+interface MaybeAdminAuthData extends BasicAuthData {
+}
+
+function toPlayerAuthData(basic: MaybePlayerAuthData): PlayerAuthData | null {
+    if(basic.auth_level != "player") return null
+    if(basic.user_id == undefined || typeof basic.user_id != "number") return null
+    if(basic.session_id == undefined || typeof basic.session_id != "string") return null
+    if(basic.user_name == undefined || typeof basic.user_name != "string") return null
+    if(basic.role == undefined || typeof basic.role != "string") return null
+
+    return {
+        user_id: basic.user_id,
+        session_id: basic.session_id,
+        user_name: basic.user_name,
+        role: basic.role,
+        ...basic
+    }
+}
+
+function toAdminAuthData(basic: MaybeAdminAuthData): AdminAuthData | null {
+    if(basic.auth_level != "control") return null
+    
+    return {
+        ...basic
+    }
 }
 
 export function parseJWTokenData<T>(jwt: string | null): T | null {
@@ -19,30 +58,22 @@ export function parseJWTokenData<T>(jwt: string | null): T | null {
     return null
 }
 
-export function updateClientToken(token: string) {
+export function updateToken(token: string) {
     localStorage.setItem("token", token)
     document.cookie = `token=${token}`
 }
 
-export function getCurrentClientTokenString() : string | null {
+export function getCurrentTokenString() : string | null {
     return localStorage.getItem("token")
 }
 
-export function getCurrentClientTokenData() : ClientTokenData | null {
-    let jwt = localStorage.getItem("token")
-    return parseJWTokenData(jwt)
+export function getCurrentPlayerTokenData() : PlayerAuthData | null {
+    const jwt = localStorage.getItem("token")
+    return toPlayerAuthData(parseJWTokenData<BasicAuthData>(jwt))
+     
 }
 
-export function updateAdminToken(token: string) {
-    localStorage.setItem("admintoken", token)
-    document.cookie = `admintoken=${token}`
-}
-
-export function getCurrentAdminTokenString() : string | null {
-    return localStorage.getItem("admintoken")
-}
-
-export function getCurrentAdminTokenData() : AdminTokenData | null {
+export function getCurrentAdminTokenData() : AdminAuthData | null {
     let jwt = localStorage.getItem("admintoken")
-    return parseJWTokenData(jwt)
+    return toAdminAuthData(parseJWTokenData<BasicAuthData>(jwt))
 }

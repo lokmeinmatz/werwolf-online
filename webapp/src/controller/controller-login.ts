@@ -1,10 +1,10 @@
 import {getErrorMessage} from '../errors'
-import {getCurrentAdminTokenString, updateAdminToken} from '../utils'
+import {getCurrentTokenString, updateToken} from '../utils'
 
 
 
     // check if old token is set
-if(getCurrentAdminTokenString() != null) {
+if(getCurrentTokenString() != null) {
 
 }
 
@@ -64,7 +64,7 @@ window.addEventListener("load", () => {
             // store jwt
             const jwt = await res.text()
 
-            updateAdminToken(jwt)
+            updateToken(jwt)
 
             console.log(`allowed to control`)
             window.location.assign(`/ctrl/overview`)

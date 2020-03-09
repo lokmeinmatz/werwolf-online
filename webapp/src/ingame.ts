@@ -1,8 +1,8 @@
 import {ServerNotifications, NotificationType} from "./websocket"
-import {getCurrentClientTokenString, getCurrentClientTokenData} from "./utils"
+import {getCurrentTokenString, getCurrentPlayerTokenData} from "./utils"
 import { ExtendableList } from "./ui"
 
-if (getCurrentClientTokenString() == null) {
+if (getCurrentTokenString() == null) {
     
     window.location.assign(`/?error=NoToken`)
 }
@@ -11,8 +11,8 @@ let playerListDom: ExtendableList<PlayerData>
 
 async function updatePlayerList() {
 
-    const token = getCurrentClientTokenString()
-    const tokenParsed = getCurrentClientTokenData()
+    const token = getCurrentTokenString()
+    const tokenParsed = getCurrentPlayerTokenData()
 
     if(!token) return
 

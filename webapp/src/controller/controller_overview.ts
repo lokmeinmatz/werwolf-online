@@ -1,8 +1,8 @@
 import {ServerNotifications, NotificationType} from "../websocket"
-import {getCurrentAdminTokenString} from "../utils"
+import {getCurrentTokenString} from "../utils"
 import { ExtendableList } from "../ui"
 
-if (getCurrentAdminTokenString() == null) {
+if (getCurrentTokenString() == null) {
     
     window.location.assign(`/ctrl/?error=NoToken`)
 }
@@ -11,7 +11,7 @@ let sessionListDom: ExtendableList<SessionData>
 
 async function updateSessionList() {
 
-    const token = getCurrentAdminTokenString()
+    const token = getCurrentTokenString()
 
     if(!token) return
 
@@ -19,13 +19,13 @@ async function updateSessionList() {
 
     let req_headers = new Headers()
     req_headers.append("Authorization", `Bearer ${token}`)
-    const res = await fetch("/api/v1/session/playerlist", {
+    const res = await fetch("/api/v1/sessions/", {
         headers: req_headers
     })
 
     if (res.status == 200 && res.headers.get("Content-Type") == "application/json") {
         let list = await res.json()
-
+        console.log(list)
         sessionListDom.setData(list)
     }
 }
@@ -51,15 +51,17 @@ window.addEventListener("load", () => {
         let root = document.createElement("div")
 
         let id = document.createElement("h3")
-        id.textContent = el.id
+        id.textContent = el
 
+        root.appendChild(id)
+
+        return root
         let created = document.createElement("p")
         created.textContent = el.created.toISOString()
 
         let active = document.createElement("p")
         active.textContent = el.active ? "ACTIVE" : "TERMINATED"
         
-        return root
 
     }, {emptyMessage: "Keine Sessions erstellt", title: "Sessions"})
 

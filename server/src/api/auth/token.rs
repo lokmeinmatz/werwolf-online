@@ -1,19 +1,22 @@
-use super::SessionID;
 use jsonwebtoken as jwt;
 use jsonwebtoken::{TokenData, Validation};
+use log::{info, warn};
 use rocket::http::RawStr;
-use rocket::request::{Outcome};
+use rocket::request::Outcome;
 use rocket::{request, Request};
 use serde::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};
-use log::{info, warn};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct BasicAuthClaims {
-    exp: u64,
-    pub(crate) sub: String,
-    pub(crate) session_id: String,
-    pub(crate) user_id: u32
+pub struct AuthClaims {
+    pub exp: u64,
+    pub auth_level: String,
+    // -- player
+    pub user_id: Option<u32>,
+    pub session_id: Option<String>,
+    pub user_name: Option<String>,
+    pub role: Option<String>,
+    // -- controller
 }
 
 #[derive(Debug)]
@@ -23,82 +26,76 @@ pub enum AuthClaimError {
     Blocked,
 }
 
-
-pub fn gen_jwt(username: String, user_id: u32, sid: &SessionID) -> Result<String, ()> {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let norole = BasicAuthClaims {
-        // token expires after 4h
-        exp: SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|_| ())?
-            .as_secs()
-            + 3600 * 4,
-        sub: username,
-        user_id,
-        session_id: sid.as_str().to_owned(),
-    };
-
-    jwt::encode(&jwt::Header::default(), &norole, super::DEV_SECRET.as_bytes()).map_err(|_| ())
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum AuthLevel {
+    Player,
+    Control,
 }
 
 #[derive(Debug)]
-pub struct AuthToken {
+pub struct BasicAuthToken {
     exp: u64,
-    username: String,
-    user_id: u32,
-    session_id: SessionID,
+    auth_level: AuthLevel,
+    claims: AuthClaims,
 }
 
-impl AuthToken {
-    pub fn username(&self) -> &str {
-        &self.username
-    }
-    pub fn session_id(&self) -> &SessionID {
-        &self.session_id
+impl BasicAuthToken {
+    pub fn auth_level(&self) -> AuthLevel {
+        self.auth_level
     }
 
-    /// Returns (username, session_id) as owned values.
-    pub fn inner(self) -> (String, SessionID) {
-        (self.username, self.session_id)
+    pub fn claims(&self) -> &AuthClaims {
+        &self.claims
     }
 }
 
-impl std::convert::TryFrom<BasicAuthClaims> for AuthToken {
-    type Error = ();
+impl std::convert::TryFrom<AuthClaims> for BasicAuthToken {
+    type Error = &'static str;
 
-    fn try_from(value: BasicAuthClaims) -> Result<Self, Self::Error> {
-        let sid = SessionID::try_from(value.session_id.as_str()).map_err(|_| ())?;
+    fn try_from(value: AuthClaims) -> Result<Self, Self::Error> {
+        //let sid = SessionID::try_from(value.session_id.as_str()).map_err(|_| ())?;
 
-        Ok(AuthToken {
+        let auth_level = match value.auth_level.as_str() {
+            "player" => AuthLevel::Player,
+            "control" => AuthLevel::Control,
+            _ => {
+                return Err("Unknown auth_level");
+            }
+        };
+
+        Ok(BasicAuthToken {
+            exp: value.exp,
+            auth_level,
+            claims: value,
+        })
+
+        /*Ok(AuthToken {
             exp: value.exp,
             session_id: sid,
             user_id: value.user_id,
             username: value.sub,
-        })
+        })*/
     }
 }
 
-impl TryFrom<&str> for AuthToken {
-    type Error = ();
+impl TryFrom<&str> for BasicAuthToken {
+    type Error = &'static str;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         // try to decode jwt
-        let tdata: TokenData<BasicAuthClaims> =
-            jwt::decode(value, super::DEV_SECRET.as_bytes(), &Validation::default()).map_err(|e| {
-                warn!("Deconding of jwt failed: {}", e.to_string());
-                ()
-            })?;
-        tdata.claims.try_into().map_err(|_| ())
+        let tdata: TokenData<AuthClaims> =
+            jwt::decode(value, super::DEV_SECRET.as_bytes(), &Validation::default())
+                .map_err(|e| "JWT decoding failed")?;
+        tdata.claims.try_into()
     }
 }
 
-impl<'r> request::FromFormValue<'r> for AuthToken {
+impl<'r> request::FromFormValue<'r> for BasicAuthToken {
     type Error = &'static str;
 
     fn from_form_value(form_value: &'r RawStr) -> Result<Self, Self::Error> {
         // try to decode jwt
-        let tdata: TokenData<BasicAuthClaims> = jwt::decode(
+        let tdata: TokenData<AuthClaims> = jwt::decode(
             form_value.as_str(),
             super::DEV_SECRET.as_bytes(),
             &Validation::default(),
@@ -109,7 +106,7 @@ impl<'r> request::FromFormValue<'r> for AuthToken {
     }
 }
 
-impl<'a, 'r> request::FromRequest<'a, 'r> for AuthToken {
+impl<'a, 'r> request::FromRequest<'a, 'r> for BasicAuthToken {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
@@ -118,11 +115,11 @@ impl<'a, 'r> request::FromRequest<'a, 'r> for AuthToken {
                 let splitted: Vec<&str> = hdr.split(" ").collect();
                 info!("got Authorization header: {:?}", splitted);
                 if splitted.len() == 2 && splitted[0] == "Bearer" {
-                    match AuthToken::try_from(splitted[1]) {
+                    match BasicAuthToken::try_from(splitted[1]) {
                         Ok(at) => return Outcome::Success(at),
                         _ => {
                             warn!("Failed to parse auth-token from header");
-                        },
+                        }
                     }
                 }
             }
@@ -131,12 +128,10 @@ impl<'a, 'r> request::FromRequest<'a, 'r> for AuthToken {
 
         // test if was stored in cookies
         match request.cookies().get("token") {
-            Some(token_cookie) => {
-                match AuthToken::try_from(token_cookie.value()) {
-                    Ok(at) => return Outcome::Success(at),
-                    _ => {
-                        warn!("Failed to parse auth-token from cookie");
-                    },
+            Some(token_cookie) => match BasicAuthToken::try_from(token_cookie.value()) {
+                Ok(at) => return Outcome::Success(at),
+                _ => {
+                    warn!("Failed to parse auth-token from cookie");
                 }
             },
             None => {}

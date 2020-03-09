@@ -1,66 +1,49 @@
-use rocket::{Route, State};
+use crate::database::Database;
+use crate::notify::{Notification, Notifier};
+use log::error;
+use log::info;
 use rocket::http::uri::Origin;
-use crate::notify::{Notifier, Notification};
-use log::{error};
+use rocket::{Route, State, Rocket};
 use rocket_contrib::json::Json;
 use serde::Serialize;
-use std::sync::{Arc, atomic::AtomicI64};
-use crate::database::Database;
 use std::sync::atomic::Ordering;
+use std::sync::{atomic::AtomicI64, Arc};
 use std::time::Duration;
-use log::info;
 
 pub mod auth;
 pub mod session;
 
-// TODO is this working?
-fn extend_with_base(base: Origin, mut routes: Vec<Route>) -> Vec<Route> {
-    for mut route in &mut routes {
-        let inner_uri = route.uri.clone();
-        route.set_uri(base.clone(), inner_uri).unwrap();
-        info!("extended {}", route.uri.path());
-    }
-
-    routes
-}
 
 /// Gets api routes <...> so that /api/v1/<...> should get exposed
 /// So gets mounted to /api/v1
-pub fn get_current_api_routes() -> Vec<Route> {
-    let mut routes: Vec<Route> = routes![stats];
-
-    // mount auth
-    let auth_base = Origin::parse("/auth").unwrap();
-    routes.append(&mut extend_with_base(auth_base, auth::get_auth_api_routes()));
-
-
-    // mount session
-    let session_base = Origin::parse("/sessions").unwrap();
-    routes.append(&mut extend_with_base(session_base, session::get_session_api_routes()));
-
-
-    routes
+pub fn mount_current_api_routes(mut rocket: Rocket) -> Rocket {
+    rocket
+        .mount("/api/v1/", routes![stats])
+        .mount("/api/v1/auth/", auth::get_auth_api_routes())
+        .mount("/api/v1/sessions/", session::get_session_api_routes())
 }
 
 #[derive(Serialize)]
 struct Stats {
     ws_connected: u32,
     sessions_active: u32,
-    unique_users: u64
+    unique_users: u64,
 }
 
 #[get("/stats")]
 fn stats(notifier: State<Notifier>, db: State<Database>) -> Json<Stats> {
     // get ws connected
-    let mut shared_ws_connected = Arc::new(AtomicI64::new(-1));
-    notifier.send(Notification::UpdateConnectionsAlive(Arc::clone(&shared_ws_connected)));
+    let shared_ws_connected = Arc::new(AtomicI64::new(-1));
+    notifier.send(Notification::UpdateConnectionsAlive(Arc::clone(
+        &shared_ws_connected,
+    )));
 
     let conn = db.get_locked_conn();
     let sessions_active = Database::get_sessions_active(conn);
-    let mut ws_connected: i64= -1;
+    let mut ws_connected: i64 = -1;
     for _ in 0..8 {
         // try if was updated
-        ws_connected =  shared_ws_connected.load(Ordering::Relaxed);
+        ws_connected = shared_ws_connected.load(Ordering::Relaxed);
         if ws_connected >= 0 {
             break;
         }
@@ -72,9 +55,9 @@ fn stats(notifier: State<Notifier>, db: State<Database>) -> Json<Stats> {
         error!("Notifier didn't respond");
     }
 
-    Json(Stats{
+    Json(Stats {
         ws_connected: ws_connected as u32,
         sessions_active,
-        unique_users: 0
+        unique_users: 0,
     })
 }

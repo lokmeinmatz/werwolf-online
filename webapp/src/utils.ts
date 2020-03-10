@@ -77,3 +77,13 @@ export function getCurrentAdminTokenData() : AdminAuthData | null {
     let jwt = localStorage.getItem("admintoken")
     return toAdminAuthData(parseJWTokenData<BasicAuthData>(jwt))
 }
+export function apiFetch(url: string): Promise<Response> {
+    console.log(`Requesting api from ${url}`)
+
+    const req_headers = new Headers()
+    const token = getCurrentTokenString()
+    req_headers.append("Authorization", `Bearer ${token}`)
+    return fetch(`/api/v1${url}`, {
+        headers: req_headers
+    })
+}

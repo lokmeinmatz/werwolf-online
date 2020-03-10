@@ -28,6 +28,8 @@ pub struct PlayerData {
     name: String,
     // TODO typed roles
     role: Option<String>,
+    joined: u64,
+    state: String
 }
 
 pub struct SessionData {

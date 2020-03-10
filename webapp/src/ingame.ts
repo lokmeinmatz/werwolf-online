@@ -1,5 +1,5 @@
 import {ServerNotifications, NotificationType} from "./websocket"
-import {getCurrentTokenString, getCurrentPlayerTokenData} from "./utils"
+import {getCurrentTokenString, getCurrentPlayerTokenData, apiFetch} from "./utils"
 import { ExtendableList } from "./ui"
 
 if (getCurrentTokenString() == null) {
@@ -17,15 +17,10 @@ async function updatePlayerList() {
     if(!token) return
 
 
-    let req_headers = new Headers()
-    req_headers.append("Authorization", `Bearer ${token}`)
-    const url = `/api/v1/sessions/${tokenParsed.session_id}/playerlist`
+    const url = `/sessions/${tokenParsed.session_id}/playerlist`
 
-    console.log(url)
 
-    const res = await fetch(url, {
-        headers: req_headers
-    })
+    const res = await apiFetch(url)
 
     if (res.status == 200 && res.headers.get("Content-Type") == "application/json") {
         let list = await res.json()

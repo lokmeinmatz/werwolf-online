@@ -69,10 +69,10 @@ impl Database {
     }
 
     pub fn get_all_sessions<T: Sized>(
-        conn: MutexGuard<Connection>,
+        conn: &mut Connection,
         extractor: fn(&Row) -> rusqlite::Result<T>,
     ) -> Vec<T> {
-        let mut prep = conn.prepare("SELECT * FROM sessions").unwrap();
+        let mut prep = conn.prepare("SELECT id, created, active FROM sessions").unwrap();
 
         prep.query_map(NO_PARAMS, extractor)
             .unwrap()
@@ -161,15 +161,17 @@ impl Database {
         Ok(uid)
     }
 
-    pub fn get_players(conn: MutexGuard<Connection>, sid: &SessionID) -> Vec<PlayerData> {
+    pub fn get_players(conn: &mut Connection, sid: &SessionID) -> Vec<PlayerData> {
         let mut stmt = conn
-            .prepare("SELECT username, role FROM users WHERE session_id = ?")
+            .prepare("SELECT username, role, joined, state FROM users WHERE session_id = ?")
             .unwrap();
 
         stmt.query_map(&[sid.as_str()], |usr_row| {
             Ok(PlayerData {
                 name: usr_row.get_unwrap(0),
                 role: usr_row.get_unwrap(1),
+                joined: usr_row.get_unwrap(2),
+                state: usr_row.get_unwrap(3)
             })
         })
         .unwrap()

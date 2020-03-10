@@ -39,7 +39,7 @@ export class ServerNotifications {
 
         this.ws.onmessage = ev => {
             const cb = this.eventCallbacks.get(ev.data)
-
+            console.log(`Notification Event: ${ev.data} | Callback: ${cb != undefined}`)
             if (cb != undefined) {
                 cb()
             }

@@ -34,17 +34,18 @@ pub fn get_overview_page_err() -> response::Redirect {
     response::Redirect::to("/ctrl/?error=NoToken")
 }
 
-#[get("/<sid>", rank = 3)]
+#[get("/session/<sid>")]
 pub fn get_controller_page(
     _auth: AdminAuthToken,
     sid: SessionID,
     db: State<Database>,
 ) -> Result<response::NamedFile, response::Redirect> {
     match Database::get_session_data(db.get_locked_conn(), &sid) {
-        Some(_) => Ok(response::NamedFile::open("../webapp/dist/controller_login.html").unwrap()),
+        Some(_) => Ok(response::NamedFile::open("../webapp/dist/controller_session.html").unwrap()),
         None => {
             warn!("Admin requested invalid session");
             Err(response::Redirect::to("ctrl/?error=InvalidSessionID"))
         }
     }
 }
+

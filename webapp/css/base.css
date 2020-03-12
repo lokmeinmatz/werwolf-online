@@ -136,3 +136,18 @@ aside {
 aside.closed {
     transform: translateX(-100%);
 }
+
+.simple-list > ul > li > div {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+    border-top: 1px solid gray;
+    cursor: pointer;
+}
+
+.simple-list > ul > li > div:hover {
+    background-color: var(--background-color-1);
+}

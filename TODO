@@ -16,6 +16,7 @@ server:
   notifier:
     ✔ ! delete ws from hashmaps as soon as Messsage::Closed gets received @done(20-02-21 00:20)
   database:
+    ☐ players not uniqe by user_name (only username per session) => restrict on entry 
     ☐ add field to users so they can rejoin if accidently logged out
     ✔ get users by session_id @started(20-02-19 13:31) @done(20-02-19 18:05) @lasted(4h34m33s)
     ☐ verify table columns on start
@@ -23,6 +24,8 @@ server:
       
 
 client:
+  start:
+    ☐ Check if last used session token is still valid
   ingame:
     ✔ fetch playerlist @started(20-02-20 00:56) @done(20-02-20 00:56) @lasted(8s)
     ✔ Display player list @started(20-02-22 12:12) @done(20-02-26 22:47) @lasted(4d10h35m)
@@ -32,7 +35,7 @@ client:
       ✔ display sessions @started(20-02-26 22:51) @done(20-03-10 00:42) @lasted(1w5d1h51m43s)
       per session view:
         ✔ page endpoints /ctrl/session/<sid> @started(20-03-10 19:35) @done(20-03-10 23:11) @lasted(3h36m10s)
-        ☐ view players
+        ✔ view players @done(20-03-13 00:44)
         ☐ block players
 
 Archive:

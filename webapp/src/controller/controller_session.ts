@@ -19,7 +19,11 @@ async function updatePlayerList() {
     const res = await apiFetch(url)
 
     if (res.status == 200 && res.headers.get("Content-Type") == "application/json") {
-        let list = await res.json()
+        let list: [PlayerData] = await res.json()
+        
+        for (let e of list) {
+            e.joined = new Date(e.joined as unknown as number * 1000)
+        }
         console.log(list)
         playerListDom.setData(list)
     }
@@ -50,8 +54,7 @@ window.addEventListener("load", () => {
 
         
         let joined = document.createElement("p")
-        const created_data = new Date(el.joined)
-        joined.textContent = created_data.toISOString()
+        joined.textContent = el.joined.toLocaleString("DE-de")
         
         let state = document.createElement("p")
         state.textContent = el.state

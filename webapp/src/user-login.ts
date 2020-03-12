@@ -78,19 +78,14 @@ window.addEventListener("load", () => {
     if (tokendata) {
         
         let p = document.createElement("p")
-        let reuse = document.createElement("button")
-        reuse.textContent = "Wiederverwenden"
+        let retry = document.createElement("a")
+        retry.textContent = "Wiederverwenden"
+        retry.href = "/game"
 
-        reuse.onclick = () => {
-            form.elements["uname"].value = tokendata.user_name
-            form.elements["sid"].value = tokendata.session_id
-
-            validateInput()
-        }
 
 
         p.textContent = `Letztes Spiel als ${tokendata.user_name} in Session ${tokendata.session_id}`
-        document.querySelector(".last-session").append(p, reuse)
+        document.querySelector(".last-session").append(p, retry)
         
     }
 

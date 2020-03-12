@@ -19,7 +19,10 @@ impl Database {
     fn verify(conn: &Connection) -> Result<(), String> {
         let needed_tables = [
             ("sessions", vec!["id", "created", "active", "settings"]),
-            ("users", vec!["session_id", "user_id", "username", "role"]),
+            (
+                "users",
+                vec!["session_id", "username", "role", "joined", "state"],
+            ),
         ];
 
         let mut table_check = conn
@@ -72,7 +75,9 @@ impl Database {
         conn: &mut Connection,
         extractor: fn(&Row) -> rusqlite::Result<T>,
     ) -> Vec<T> {
-        let mut prep = conn.prepare("SELECT id, created, active FROM sessions").unwrap();
+        let mut prep = conn
+            .prepare("SELECT id, created, active FROM sessions")
+            .unwrap();
 
         prep.query_map(NO_PARAMS, extractor)
             .unwrap()
@@ -96,10 +101,10 @@ impl Database {
     ///
     /// Returns the player ID if created
     pub fn maybe_add_player(
-        conn: MutexGuard<Connection>,
+        conn: &mut Connection,
         name: &str,
         sid: &SessionID,
-    ) -> Result<u32, String> {
+    ) -> Result<(), String> {
         // 1) check if session exists
         let session_check: Result<(bool, Option<String>), _> = conn.query_row(
             "SELECT active, settings FROM sessions WHERE id = ?",
@@ -122,8 +127,9 @@ impl Database {
         // 2) no player with same name
 
         match conn.query_row(
-            "SELECT username FROM users WHERE session_id = ? AND username = ?",
-            &[sid.as_str(), &name],
+            " SELECT * FROM users WHERE user_name = ? AND session_id IN (SELECT id FROM sessions \
+            WHERE active = 1);",
+            &[&name],
             |row| Ok(true),
         ) {
             Ok(true) => {
@@ -133,45 +139,29 @@ impl Database {
             _ => {}
         }
 
-        // 3) TODO later
-
-        // generate user id
-        let uid = {
-            let time = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as u32;
-
-            let mut mask = 0u32;
-            for c in name.bytes() {
-                mask = mask.rotate_left(8) ^ c as u32;
-            }
-            time ^ mask
-        };
-
-        info!("generated random uid {}", uid);
+        let joined = std::time::UNIX_EPOCH.elapsed().unwrap().as_secs() as i64;
 
         // add player
         conn.execute(
-            "INSERT INTO users (user_id, session_id, username) VALUES (?, ?, ?)",
-            params![uid, sid.as_str(), &name],
+            "INSERT INTO users (user_name, session_id, joined, state) VALUES (?, ?, ?, ?)",
+            params![&name, sid.as_str(), joined, "waiting"],
         )
         .unwrap();
 
-        Ok(uid)
+        Ok(())
     }
 
     pub fn get_players(conn: &mut Connection, sid: &SessionID) -> Vec<PlayerData> {
         let mut stmt = conn
-            .prepare("SELECT username, role, joined, state FROM users WHERE session_id = ?")
+            .prepare("SELECT user_name, role, joined, state FROM users WHERE session_id = ?")
             .unwrap();
 
         stmt.query_map(&[sid.as_str()], |usr_row| {
             Ok(PlayerData {
                 name: usr_row.get_unwrap(0),
                 role: usr_row.get_unwrap(1),
-                joined: usr_row.get_unwrap(2),
-                state: usr_row.get_unwrap(3)
+                joined: usr_row.get_unwrap::<usize, i64>(2) as u64,
+                state: usr_row.get_unwrap(3),
             })
         })
         .unwrap()

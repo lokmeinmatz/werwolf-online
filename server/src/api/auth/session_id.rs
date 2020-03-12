@@ -1,8 +1,8 @@
+use log::{error, info, warn};
 use rocket::{http, request};
 use std::convert::TryFrom;
 use std::fmt::Error;
 use std::fmt::Formatter;
-use log::{error, warn, info};
 
 const SID_LENGTH: usize = 8;
 

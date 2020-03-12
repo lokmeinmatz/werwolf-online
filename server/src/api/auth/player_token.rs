@@ -11,8 +11,28 @@ use rocket::request::Outcome;
 #[derive(Debug)]
 pub struct PlayerAuthToken {
     pub basic: BasicAuthToken,
-    pub user_id: u32,
-    pub session_id: SessionID
+    pub user_name: String,
+    pub session_id: SessionID,
+    pub role: String,
+    pub state: String,
+}
+
+pub enum PlayerState {
+    Waiting,
+    Alive,
+    Dead,
+    Spectator,
+}
+
+impl PlayerState {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            &PlayerState::Waiting => "waiting",
+            &PlayerState::Alive => "alive",
+            &PlayerState::Dead => "dead",
+            &PlayerState::Spectator => "spectator",
+        }
+    }
 }
 
 impl PlayerAuthToken {
@@ -24,20 +44,25 @@ impl PlayerAuthToken {
         self.basic.claims().role.as_ref().unwrap().as_str()
     }
 
-    pub fn get_jwt(user_id: u32, session_id: SessionID, user_name: String, role: String) -> String {
-        use std::time::{SystemTime, UNIX_EPOCH};
+    pub fn get_jwt(
+        session_id: SessionID,
+        user_name: String,
+        role: String,
+        state: PlayerState,
+    ) -> String {
+        use std::time::UNIX_EPOCH;
 
         let norole = AuthClaims {
             // token expires after 4h
-            exp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
+            exp: UNIX_EPOCH
+                .elapsed()
                 .unwrap() // fails if time is before UNIX_EPOCH
                 .as_secs()
                 + 3600 * 4,
-            user_id: Some(user_id),
             session_id: Some(session_id.as_str().to_owned()),
             user_name: Some(user_name),
             auth_level: "player".to_string(),
+            state: Some(state.as_str().to_owned()),
             role: Some(role),
         };
 
@@ -57,20 +82,28 @@ impl<'a> TryFrom<BasicAuthToken> for PlayerAuthToken {
         if value.auth_level() != AuthLevel::Player {
             return Err("No player auth_level");
         }
-
         if value.claims().user_name.is_none() {
             return Err("No user_name");
         }
-
         if value.claims().role.is_none() {
-            return Err("No role")
+            return Err("No role");
+        }
+        if value.claims().state.is_none() {
+            return Err("No state");
         }
 
         Ok(PlayerAuthToken {
-            user_id: value.claims().user_id.ok_or("No user_id")?,
             session_id: SessionID::try_from(
-                value.claims().session_id.as_ref().ok_or("No session_id")?.as_str(),
+                value
+                    .claims()
+                    .session_id
+                    .as_ref()
+                    .ok_or("No session_id")?
+                    .as_str(),
             )?,
+            user_name: value.claims().user_name.as_ref().unwrap().clone(),
+            role: value.claims().role.as_ref().unwrap().clone(),
+            state: value.claims().state.as_ref().unwrap().clone(),
             basic: value,
         })
     }

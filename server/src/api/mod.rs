@@ -3,7 +3,7 @@ use crate::notify::{Notification, Notifier};
 use log::error;
 use log::info;
 use rocket::http::uri::Origin;
-use rocket::{Route, State, Rocket};
+use rocket::{Rocket, Route, State};
 use rocket_contrib::json::Json;
 use serde::Serialize;
 use std::sync::atomic::Ordering;
@@ -12,7 +12,6 @@ use std::time::Duration;
 
 pub mod auth;
 pub mod session;
-
 
 /// Gets api routes <...> so that /api/v1/<...> should get exposed
 /// So gets mounted to /api/v1

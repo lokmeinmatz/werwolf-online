@@ -1,11 +1,11 @@
-use crate::api::auth::{SessionID, PlayerAuthToken};
 use crate::api::auth::{AdminAuthToken, BasicAuthToken};
+use crate::api::auth::{PlayerAuthToken, SessionID};
 use crate::database::Database;
 use crate::PlayerData;
 use rocket::{Route, State};
 use rocket_contrib::json::Json;
-use std::convert::TryFrom;
 use serde::Serialize;
+use std::convert::TryFrom;
 use std::ops::Add;
 
 pub fn get_session_api_routes() -> Vec<Route> {
@@ -17,7 +17,7 @@ struct BasicSessionInfo {
     id: String,
     player_count: u32,
     active: bool,
-    created: u64
+    created: u64,
 }
 
 #[get("/")]
@@ -29,17 +29,16 @@ fn get_all_sessions(ctrl: AdminAuthToken, db: State<Database>) -> Json<Vec<Basic
             id: r.get(0)?,
             player_count: 0,
             created: secs_unix as u64,
-            active: r.get(2)?
+            active: r.get(2)?,
         })
     });
 
     for s in &mut sessions {
         // get players in session
-        s.player_count = Database::get_players(
-            &mut locked,
-            &SessionID::try_from(s.id.as_str()).unwrap()).len() as u32;
+        s.player_count =
+            Database::get_players(&mut locked, &SessionID::try_from(s.id.as_str()).unwrap()).len()
+                as u32;
     }
-
 
     Json(sessions)
 }
@@ -55,8 +54,5 @@ fn get_playerlist(
             return None;
         }
     }
-    Some(Json(Database::get_players(
-        &mut db.get_locked_conn(),
-        &sid,
-    )))
+    Some(Json(Database::get_players(&mut db.get_locked_conn(), &sid)))
 }

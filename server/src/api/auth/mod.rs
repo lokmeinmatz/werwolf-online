@@ -42,6 +42,7 @@ fn get_status(token: Option<token::BasicAuthToken>) -> String {
     "unimplemented".into()
 }
 
+use crate::api::auth::player_token::PlayerState;
 use crate::database::Database;
 use crate::notify::{Notification, Notifier};
 use serde::export::TryFrom;
@@ -75,9 +76,14 @@ fn connect_client(
         Err(e) => return response::status::Custom(http::Status::BadRequest, e.to_string()),
     };
 
-    match Database::maybe_add_player(db.get_locked_conn(), &conn_data.username, &sid) {
-        Ok(uid) => {
-            let jwt = PlayerAuthToken::get_jwt(uid, sid, conn_data.username, "".to_string());
+    match Database::maybe_add_player(&mut db.get_locked_conn(), &conn_data.username, &sid) {
+        Ok(()) => {
+            let jwt = PlayerAuthToken::get_jwt(
+                sid,
+                conn_data.username,
+                "".to_string(),
+                PlayerState::Waiting,
+            );
 
             // tell others that new player has connected
             notifier.send(Notification::UpdatePlayerList(sid));

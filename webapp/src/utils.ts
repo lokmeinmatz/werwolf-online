@@ -4,17 +4,17 @@ interface BasicAuthData {
 }
 
 interface PlayerAuthData extends BasicAuthData {
-    user_id: number,
     session_id: string,
     user_name: string,
-    role: string
+    role: string | null,
+    state: string
 }
 
 interface MaybePlayerAuthData extends BasicAuthData {
-    user_id?: number,
     session_id?: string,
     user_name?: string,
-    role?: string
+    role?: string,
+    state?: string
 }
 
 interface AdminAuthData extends BasicAuthData {
@@ -25,16 +25,16 @@ interface MaybeAdminAuthData extends BasicAuthData {
 
 function toPlayerAuthData(basic: MaybePlayerAuthData): PlayerAuthData | null {
     if(basic.auth_level != "player") return null
-    if(basic.user_id == undefined || typeof basic.user_id != "number") return null
     if(basic.session_id == undefined || typeof basic.session_id != "string") return null
     if(basic.user_name == undefined || typeof basic.user_name != "string") return null
-    if(basic.role == undefined || typeof basic.role != "string") return null
+    //if(basic.role == undefined || typeof basic.role != "string") return null
+    if(basic.state == undefined || typeof basic.state != "string") return null
 
     return {
-        user_id: basic.user_id,
         session_id: basic.session_id,
         user_name: basic.user_name,
         role: basic.role,
+        state: basic.state,
         ...basic
     }
 }

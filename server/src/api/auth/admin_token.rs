@@ -22,10 +22,10 @@ impl AdminAuthToken {
                 .unwrap() // fails if time is before UNIX_EPOCH
                 .as_secs()
                 + 3600 * 4,
-            user_id: None,
             session_id: None,
             user_name: None,
             role: None,
+            state: None,
             auth_level: "control".to_string(),
         };
 

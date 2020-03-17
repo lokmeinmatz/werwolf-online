@@ -40,7 +40,7 @@ pub fn get_controller_page(
     sid: SessionID,
     db: State<Database>,
 ) -> Result<response::NamedFile, response::Redirect> {
-    match Database::get_session_data(db.get_locked_conn(), &sid) {
+    match Database::get_session_data(&mut db.get_locked_conn(), &sid) {
         Some(_) => Ok(response::NamedFile::open("../webapp/dist/controller_session.html").unwrap()),
         None => {
             warn!("Admin requested invalid session");

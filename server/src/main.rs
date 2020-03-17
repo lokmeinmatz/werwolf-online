@@ -23,14 +23,7 @@ mod notify;
 
 pub static SHOULD_TERMINATE: AtomicBool = AtomicBool::new(false);
 
-#[derive(Serialize)]
-pub struct PlayerData {
-    name: String,
-    // TODO typed roles
-    role: Option<String>,
-    joined: u64,
-    state: String,
-}
+
 
 pub struct SessionData {
     id: SessionID,

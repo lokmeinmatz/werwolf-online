@@ -17,7 +17,7 @@ pub fn get_game_page(
 ) -> Result<response::NamedFile, response::Redirect> {
     info!("New page request to session {}", auth.session_id);
 
-    if Database::get_session_data(db.get_locked_conn(), &auth.session_id).is_none() {
+    if Database::get_session_data(&mut db.get_locked_conn(), &auth.session_id).is_none() {
         warn!("Invalid session requested");
         Err(response::Redirect::to("/?error=InvalidSessionID"))
     //Err(response::Redirect::to("/"))

@@ -1,7 +1,7 @@
 import {getErrorMessage} from './errors'
-import {getCurrentPlayerTokenData, updateToken} from './utils'
+import {getCurrentPlayerTokenData, updateToken, apiFetch} from './utils'
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
     console.log("welcome to the start page")
 
     const urlParams = new URLSearchParams(window.location.search)
@@ -76,10 +76,24 @@ window.addEventListener("load", () => {
     const tokendata = getCurrentPlayerTokenData()
 
     if (tokendata) {
+
+        // test if session still active
+        const res = await apiFetch(`/sessions/${tokendata.session_id}`)
+
+        if (!res.ok) {
+            console.log("No session data for last used session")
+            return
+        }
+        const sInfo: {active: boolean} = await res.json()
+        
+        if (!sInfo.active) {
+            console.log("Last used session is not active")
+            return
+        }
         
         let p = document.createElement("p")
         let retry = document.createElement("a")
-        retry.textContent = "Wiederverwenden"
+        retry.textContent = "Session wieder beitreteten"
         retry.href = "/game"
 
 

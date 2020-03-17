@@ -25,6 +25,7 @@ server:
 
 client:
   start:
+    ☐ login post fetch support to apiFetch
     ☐ Check if last used session token is still valid
   ingame:
     ✔ fetch playerlist @started(20-02-20 00:56) @done(20-02-20 00:56) @lasted(8s)

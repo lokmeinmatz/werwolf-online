@@ -1,6 +1,5 @@
 use serde::Serialize;
 
-
 #[derive(Serialize)]
 pub struct Stats {
     pub ws_connected: u32,

@@ -1,11 +1,11 @@
 use crate::api::auth::SessionID;
-use crate::{SessionData};
+use crate::api::net_types::PlayerData;
+use crate::SessionData;
 use log::{error, info};
 use rusqlite::{params, Connection, Row, NO_PARAMS};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard};
-use crate::api::net_types::PlayerData;
 
 pub struct Database(Arc<Mutex<Connection>>);
 

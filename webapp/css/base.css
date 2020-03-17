@@ -151,3 +151,18 @@ aside.closed {
 .simple-list > ul > li > div:hover {
     background-color: var(--background-color-1);
 }
+
+main {
+    display: flex;
+    padding: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+	
+
+@media only screen and (min-width:1200px){
+    main {
+        flex-direction: row;
+    }
+}

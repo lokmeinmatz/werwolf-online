@@ -1,3 +1,4 @@
+use crate::api::net_types::Stats;
 use crate::database::Database;
 use crate::notify::{Notification, Notifier};
 use log::error;
@@ -9,11 +10,10 @@ use serde::Serialize;
 use std::sync::atomic::Ordering;
 use std::sync::{atomic::AtomicI64, Arc};
 use std::time::Duration;
-use crate::api::net_types::Stats;
 
 pub mod auth;
-pub mod session;
 pub mod net_types;
+pub mod session;
 
 /// Gets api routes <...> so that /api/v1/<...> should get exposed
 /// So gets mounted to /api/v1
@@ -23,8 +23,6 @@ pub fn mount_current_api_routes(mut rocket: Rocket) -> Rocket {
         .mount("/api/v1/auth/", auth::get_auth_api_routes())
         .mount("/api/v1/sessions/", session::get_session_api_routes())
 }
-
-
 
 #[get("/stats")]
 fn stats(notifier: State<Notifier>, db: State<Database>) -> Json<Stats> {

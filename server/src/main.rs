@@ -23,8 +23,6 @@ mod notify;
 
 pub static SHOULD_TERMINATE: AtomicBool = AtomicBool::new(false);
 
-
-
 pub struct SessionData {
     id: SessionID,
     created: SystemTime,

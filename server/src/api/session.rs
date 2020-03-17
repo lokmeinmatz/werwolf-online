@@ -1,19 +1,17 @@
 use crate::api::auth::{AdminAuthToken, BasicAuthToken};
 use crate::api::auth::{PlayerAuthToken, SessionID};
+use crate::api::net_types::{BasicSessionInfo, PlayerData};
 use crate::database::Database;
-use crate::{SessionData};
+use crate::SessionData;
 use rocket::{Route, State};
 use rocket_contrib::json::Json;
 use serde::Serialize;
 use std::convert::TryFrom;
 use std::ops::Add;
-use crate::api::net_types::{PlayerData, BasicSessionInfo};
 
 pub fn get_session_api_routes() -> Vec<Route> {
     routes![get_playerlist, get_all_sessions, get_session_info]
 }
-
-
 
 impl From<SessionData> for BasicSessionInfo {
     fn from(sd: SessionData) -> Self {
@@ -21,7 +19,11 @@ impl From<SessionData> for BasicSessionInfo {
             id: sd.id.to_string(),
             player_count: 0,
             active: sd.active,
-            created: sd.created.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()
+            created: sd
+                .created
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
         }
     }
 }
@@ -71,6 +73,6 @@ fn get_session_info(
 ) -> Option<Json<BasicSessionInfo>> {
     match Database::get_session_data(&mut db.get_locked_conn(), &sid) {
         Some(sd) => Some(Json(sd.into())),
-        None => None
+        None => None,
     }
 }

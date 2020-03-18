@@ -16,14 +16,32 @@ impl Database {
         Ok(Database(Arc::new(Mutex::new(conn))))
     }
 
+    pub fn next_free_user_id(conn: &Connection) -> u32 {
+
+        for _ in 0..100 {
+            let rgid = rand::random::<u32>();
+
+            if conn.prepare("SELECT user_id FROM users WHERE user_id = ?").unwrap()
+                .query(&[rgid as i64]).unwrap().next().unwrap().is_none() {
+                return rgid;
+            }
+        }
+        panic!("Could not find unused user_id in 100 tries :(");
+        return 0;
+    }
+
     /// checks if the connected database contains needed tables and columns
     fn verify(conn: &Connection) -> Result<(), String> {
         let needed_tables = [
             ("sessions", vec!["id", "created", "active", "settings"]),
             (
                 "users",
-                vec!["session_id", "username", "role", "joined", "state"],
+                vec!["user_id", "session_id", "username", "role", "joined", "state"],
             ),
+            (
+                "chat",
+                vec!["message_id"] // TODO extend
+            )
         ];
 
         let mut table_check = conn
@@ -105,13 +123,15 @@ impl Database {
         conn: &mut Connection,
         name: &str,
         sid: &SessionID,
-    ) -> Result<(), String> {
+    ) -> Result<u32, String> {
         // 1) check if session exists
         let session_check: Result<(bool, Option<String>), _> = conn.query_row(
             "SELECT active, settings FROM sessions WHERE id = ?",
             &[sid.as_str()],
             |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
         );
+
+        let id = Self::next_free_user_id(conn);
 
         match session_check {
             Ok((true, _settings)) => {}
@@ -144,25 +164,26 @@ impl Database {
 
         // add player
         conn.execute(
-            "INSERT INTO users (user_name, session_id, joined, state) VALUES (?, ?, ?, ?)",
-            params![&name, sid.as_str(), joined, "waiting"],
-        )
-        .unwrap();
+            "INSERT INTO users (user_id, user_name, session_id, joined, state) VALUES (?, ?, ?, ?)",
+            params![id as i64, &name, sid.as_str(), joined, "waiting"],
+        ).map_err(|e| e.to_string())?;
 
-        Ok(())
+        Ok(id)
     }
 
     pub fn get_players(conn: &mut Connection, sid: &SessionID) -> Vec<PlayerData> {
         let mut stmt = conn
-            .prepare("SELECT user_name, role, joined, state FROM users WHERE session_id = ?")
+            .prepare("SELECT user_id, user_name, role, joined, state FROM users WHERE session_id =\
+             ?")
             .unwrap();
 
         stmt.query_map(&[sid.as_str()], |usr_row| {
             Ok(PlayerData {
-                name: usr_row.get_unwrap(0),
-                role: usr_row.get_unwrap(1),
-                joined: usr_row.get_unwrap::<usize, i64>(2) as u64,
-                state: usr_row.get_unwrap(3),
+                user_id: usr_row.get_unwrap(0),
+                name: usr_row.get_unwrap(1),
+                role: usr_row.get_unwrap(2),
+                joined: usr_row.get_unwrap::<usize, i64>(3) as u64,
+                state: usr_row.get_unwrap(4),
             })
         })
         .unwrap()

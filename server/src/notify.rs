@@ -12,7 +12,7 @@ use tungstenite::Message;
 
 pub enum Notification {
     UpdatePlayerList(SessionID),
-    CustomToPlayer(String, String),
+    CustomToPlayer(u64, String),
     CustomToSession(SessionID, String),
     UpdateConnectionsAlive(Arc<atomic::AtomicI64>),
 }

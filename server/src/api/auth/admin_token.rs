@@ -27,6 +27,7 @@ impl AdminAuthToken {
             role: None,
             state: None,
             auth_level: "control".to_string(),
+            user_id: None
         };
 
         jwt::encode(

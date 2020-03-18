@@ -11,6 +11,7 @@ use rocket::request::Outcome;
 #[derive(Debug)]
 pub struct PlayerAuthToken {
     pub basic: BasicAuthToken,
+    pub user_id: u32,
     pub user_name: String,
     pub session_id: SessionID,
     pub role: String,
@@ -45,6 +46,7 @@ impl PlayerAuthToken {
     }
 
     pub fn get_jwt(
+        user_id: u32,
         session_id: SessionID,
         user_name: String,
         role: String,
@@ -64,6 +66,7 @@ impl PlayerAuthToken {
             auth_level: "player".to_string(),
             state: Some(state.as_str().to_owned()),
             role: Some(role),
+            user_id: Some(user_id)
         };
 
         jwt::encode(
@@ -85,6 +88,9 @@ impl<'a> TryFrom<BasicAuthToken> for PlayerAuthToken {
         if value.claims().user_name.is_none() {
             return Err("No user_name");
         }
+        if value.claims().user_id.is_none() {
+            return Err("No user_id");
+        }
         if value.claims().role.is_none() {
             return Err("No role");
         }
@@ -93,6 +99,7 @@ impl<'a> TryFrom<BasicAuthToken> for PlayerAuthToken {
         }
 
         Ok(PlayerAuthToken {
+            user_id: value.claims().user_id.unwrap(),
             session_id: SessionID::try_from(
                 value
                     .claims()

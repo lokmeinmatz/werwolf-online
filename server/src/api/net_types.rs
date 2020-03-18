@@ -17,6 +17,7 @@ pub struct BasicSessionInfo {
 
 #[derive(Serialize)]
 pub struct PlayerData {
+    pub user_id: u32,
     pub name: String,
     // TODO typed roles
     pub role: Option<String>,

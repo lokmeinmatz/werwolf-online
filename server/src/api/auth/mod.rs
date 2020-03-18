@@ -77,8 +77,11 @@ fn connect_client(
     };
 
     match Database::maybe_add_player(&mut db.get_locked_conn(), &conn_data.username, &sid) {
-        Ok(()) => {
+        Ok(user_id) => {
+
+
             let jwt = PlayerAuthToken::get_jwt(
+                user_id,
                 sid,
                 conn_data.username,
                 "".to_string(),

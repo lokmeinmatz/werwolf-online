@@ -12,8 +12,9 @@ pub struct AuthClaims {
     pub exp: u64,
     pub auth_level: String,
     // -- player
-    pub session_id: Option<String>,
+    pub user_id: Option<u32>,
     pub user_name: Option<String>,
+    pub session_id: Option<String>,
     pub role: Option<String>,
     pub state: Option<String>, // -- controller
 }

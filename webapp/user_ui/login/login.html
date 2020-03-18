@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controller Login</title>
-    <link rel="stylesheet" href="../css/base.css">
-    <link rel="stylesheet" href="../css/start.css">
-    <script src="../src/base.ts"></script>
-    <script src="../src/controller/controller-login.ts"></script>
+    <title>Start</title>
+    <link rel="stylesheet" href="/base.css">
+    <link rel="stylesheet" href="./login.css">
+    <script src="/base.ts"></script>
+    <script src="./login.ts"></script>
 </head>
 <body class="dark">
     <nav>
@@ -21,9 +21,11 @@
     </aside>
     <main>
         <form class="connect" action="/connect" method="POST">
-            <label for="admin-pwd" class="contrast-1">Admin-Passwort</label>
-            <input type="text" name="admin-pwd" id="admin-pwd">
-            <input type="submit" class="connect-btn" value="Als Controller anmelden">
+            <label for="uname" class="contrast-1">Username</label>
+            <input type="text" name="user-name" id="uname">
+            <label for="sid" class="contrast-1">Session-ID</label>
+            <input type="text" name="session-id" id="sid">
+            <input type="submit" class="connect-btn" value="connect">
         </form>
         <div class="last-session"></div>
     </main>

@@ -1,6 +1,6 @@
-import {ServerNotifications, NotificationType} from "../websocket"
-import {getCurrentTokenString, apiFetch} from "../utils"
-import { ExtendableList } from "../ui"
+import {ServerNotifications, NotificationType} from "../../src/websocket"
+import {getCurrentTokenString, apiFetch} from "../../src/utils"
+import { ExtendableList } from "../../src/ui"
 
 if (getCurrentTokenString() == null) {
     

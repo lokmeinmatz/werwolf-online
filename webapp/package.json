@@ -5,8 +5,8 @@
   "main": "dist/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "parcel pages/*.html",
-    "dev-watch": "parcel watch pages/*.html --public-url /static/"
+    "dev": "parcel *.html",
+    "dev-watch": "parcel watch admin_ui/**/*.html user_ui/**/*.html --public-url /static/"
   },
   "author": "lokmeinmatz",
   "license": "GPL-3.0-or-later",

@@ -30,9 +30,11 @@ pub struct SessionData {
     settings: Option<String>,
 }
 
+pub const DIST_BASE: &'static str = "../webapp/dist/";
+
 #[get("/")]
 fn start_get() -> Option<response::NamedFile> {
-    response::NamedFile::open("../webapp/dist/start.html").ok()
+    response::NamedFile::open([DIST_BASE, "user_ui/login/login.html"].concat()).ok()
 }
 
 fn main() -> std::io::Result<()> {

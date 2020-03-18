@@ -21,12 +21,12 @@ pub fn mount_controller_pages(mut rocket: Rocket) -> Rocket {
 
 #[get("/")]
 pub fn get_login_page() -> response::NamedFile {
-    response::NamedFile::open("../webapp/dist/controller_login.html").unwrap()
+    response::NamedFile::open([crate::DIST_BASE, "admin_ui/login/login.html"].concat()).unwrap()
 }
 
 #[get("/overview")]
 pub fn get_overview_page(_auth: AdminAuthToken) -> response::NamedFile {
-    response::NamedFile::open("../webapp/dist/controller_overview.html").unwrap()
+    response::NamedFile::open([crate::DIST_BASE, "admin_ui/overview/overview.html"].concat()).unwrap()
 }
 
 #[get("/overview", rank = 2)]
@@ -41,7 +41,9 @@ pub fn get_controller_page(
     db: State<Database>,
 ) -> Result<response::NamedFile, response::Redirect> {
     match Database::get_session_data(&mut db.get_locked_conn(), &sid) {
-        Some(_) => Ok(response::NamedFile::open("../webapp/dist/controller_session.html").unwrap()),
+        Some(_) => Ok(response::NamedFile::open([crate::DIST_BASE,
+        "admin_ui/session/session.html"].concat())
+            .unwrap()),
         None => {
             warn!("Admin requested invalid session");
             Err(response::Redirect::to("ctrl/?error=InvalidSessionID"))

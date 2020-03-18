@@ -1,5 +1,5 @@
-import {getErrorMessage} from '../errors'
-import {getCurrentTokenString, updateToken} from '../utils'
+import {getErrorMessage} from '../../src/errors'
+import {getCurrentTokenString, updateToken} from '../../src/utils'
 
 
 

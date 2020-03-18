@@ -22,7 +22,7 @@ pub fn get_game_page(
         Err(response::Redirect::to("/?error=InvalidSessionID"))
     //Err(response::Redirect::to("/"))
     } else {
-        let res = response::NamedFile::open("../webapp/dist/ingame.html")
+        let res = response::NamedFile::open([crate::DIST_BASE, "user_ui/ingame/ingame.html"].concat())
             .map_err(|e| error!("Failed to host file: {:?}", e))
             .unwrap();
         //Cache-Control: max-age=3600, must-revalidate

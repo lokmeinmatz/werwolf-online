@@ -24,7 +24,7 @@ server:
       
 
 client:
-  ☐ Fix vs code problem with root parcel imports @started(20-03-18 23:58)
+  ✔ Fix vs code problem with root parcel imports @started(20-03-18 23:58) @done(20-03-19 12:29) @lasted(12h31m31s)
   start:
     ☐ login post fetch support to apiFetch
     ☐ Check if last used session token is still valid

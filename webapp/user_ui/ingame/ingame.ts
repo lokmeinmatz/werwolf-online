@@ -1,38 +1,28 @@
-import {ServerNotifications, NotificationType} from "/src/websocket"
-import {getCurrentTokenString, getCurrentPlayerTokenData, apiFetch} from "../../src/utils"
+import {ServerNotifications, NotificationType} from "../../src/websocket"
+import {getCurrentTokenString, getCurrentPlayerTokenData} from "../../src/utils"
 import { ExtendableList } from "../../src/ui"
+import * as api from "../../src/api"
 
 if (getCurrentTokenString() == null) {
     
     window.location.assign(`/?error=NoToken`)
 }
 
-let playerListDom: ExtendableList<PlayerData>
+let playerListDom: ExtendableList<api.PlayerData>
 
 async function updatePlayerList() {
 
-    const token = getCurrentTokenString()
     const tokenParsed = getCurrentPlayerTokenData()
-
-    if(!token) return
-
-
-    const url = `/sessions/${tokenParsed.session_id}/playerlist`
-
-
-    const res = await apiFetch(url)
-
-    if (res.status == 200 && res.headers.get("Content-Type") == "application/json") {
-        let list = await res.json()
-
+    try {
+        const list = await api.getPlayerList(tokenParsed.session_id)
         playerListDom.setData(list)
+    } catch (error) {
+        console.error(error)
     }
+    
 }
 
-interface PlayerData {
-    name: string,
-    role: object | null
-}
+
 
 window.addEventListener("load", () => {
     
@@ -43,7 +33,7 @@ window.addEventListener("load", () => {
         updatePlayerList()
     })
 
-    playerListDom = new ExtendableList<PlayerData>(document.querySelector("#playerlist"),  el => {
+    playerListDom = new ExtendableList<api.PlayerData>(document.querySelector("#playerlist"),  el => {
         let root = document.createElement("p")
 
         root.textContent = el.name

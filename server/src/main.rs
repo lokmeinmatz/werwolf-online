@@ -16,10 +16,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::SystemTime;
 
 mod api;
-mod controller;
+mod page_hosting;
 mod database;
-mod ingame;
 mod notify;
+
+use page_hosting::*;
 
 pub static SHOULD_TERMINATE: AtomicBool = AtomicBool::new(false);
 

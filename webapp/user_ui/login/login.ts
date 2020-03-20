@@ -1,5 +1,5 @@
-import {getErrorMessage} from '/src/errors'
-import {getCurrentPlayerTokenData, updateToken, apiFetch} from '/src/utils'
+import {getErrorMessage} from '../../src/errors'
+import {getCurrentPlayerTokenData, updateToken} from '../../src/utils'
 
 window.addEventListener("load", async () => {
     console.log("welcome to the start page")
